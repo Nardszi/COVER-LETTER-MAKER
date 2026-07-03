@@ -114,11 +114,27 @@ textarea.letter-output{min-height:350px;font-family:Georgia,'Times New Roman',se
 .preview-toolbar .btn{font-size:.75rem;padding:4px 10px}
 .template-select{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-size:.8rem;padding:4px 8px;cursor:pointer}
 .history-search{width:100%;padding:8px 12px;background:var(--card);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-size:.85rem;margin-bottom:12px}
-.skill-cat-editor{margin-top:8px;padding:8px;background:var(--card);border:1px solid var(--border);border-radius:var(--radius-sm);display:none}
+.skill-cat-editor{display:none}
 .skill-cat-editor.active{display:block}
-.skill-cat-row{display:flex;gap:6px;margin-bottom:4px;align-items:center}
-.skill-cat-row input{flex:1;padding:4px 8px;font-size:.8rem}
-.skill-cat-row .btn{padding:4px 8px;font-size:.75rem}
+.skill-cat-modal{position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(4px);z-index:1500;display:flex;align-items:center;justify-content:center}
+.skill-cat-modal .modal-inner{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);width:700px;max-width:95vw;max-height:85vh;display:flex;flex-direction:column}
+.skill-cat-modal .modal-head{padding:20px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.skill-cat-modal .modal-head h2{font-size:1.1rem;color:var(--text-bright);margin:0}
+.skill-cat-modal .modal-head .close-btn{background:none;border:none;color:var(--text-dim);font-size:1.5rem;cursor:pointer;padding:4px 8px;line-height:1}
+.skill-cat-modal .modal-head .close-btn:hover{color:var(--text-bright)}
+.skill-cat-modal .modal-body{padding:20px 24px;overflow-y:auto;flex:1}
+.skill-cat-modal .modal-foot{padding:16px 24px;border-top:1px solid var(--border);display:flex;gap:10px;justify-content:flex-end}
+.skill-cat-row{display:flex;gap:8px;margin-bottom:10px;align-items:center}
+.skill-cat-row .cat-name{width:180px;flex-shrink:0}
+.skill-cat-row .cat-name input{width:100%;padding:8px 10px;font-size:.85rem;background:var(--card);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text)}
+.skill-cat-row .cat-keywords{flex:1}
+.skill-cat-row .cat-keywords input{width:100%;padding:8px 10px;font-size:.85rem;background:var(--card);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text)}
+.skill-cat-row .cat-remove{background:none;border:1px solid var(--border);color:var(--red);cursor:pointer;padding:6px 10px;border-radius:var(--radius-sm);font-size:.8rem}
+.skill-cat-row .cat-remove:hover{background:rgba(239,68,68,.1)}
+.skill-cat-header{display:flex;gap:8px;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border)}
+.skill-cat-header span{font-size:.75rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:.5px}
+.skill-cat-header .cat-name{width:180px}
+.skill-cat-header .cat-keywords{flex:1}
 .undo-redo{display:flex;gap:4px;margin-left:auto}
 .undo-redo .btn{padding:4px 10px;font-size:.8rem}
 @media(max-width:600px){
@@ -137,6 +153,10 @@ textarea.letter-output{min-height:350px;font-family:Georgia,'Times New Roman',se
   .resume-name{font-size:18pt!important}
   .form-row{grid-template-columns:1fr!important}
   .modal{padding:20px;width:95vw}
+  .skill-cat-modal .modal-inner{width:100%;max-width:100%;max-height:95vh}
+  .skill-cat-row{flex-direction:column;gap:6px}
+  .skill-cat-row .cat-name,.skill-cat-row .cat-keywords{width:100%}
+  .skill-cat-header{display:none}
 }
 </style>
 </head>
@@ -238,11 +258,6 @@ textarea.letter-output{min-height:350px;font-family:Georgia,'Times New Roman',se
             <li>Download as .doc or .pdf</li>
           </ul>
           <button class="btn btn-secondary btn-sm" style="margin-top:8px" onclick="toggleSkillCatEditor()">Edit Skill Categories</button>
-          <div class="skill-cat-editor" id="skillCatEditor">
-            <div id="skillCatList"></div>
-            <button class="btn btn-secondary btn-sm" style="margin-top:6px" onclick="addSkillCategory()">+ Add Category</button>
-            <button class="btn btn-primary btn-sm" style="margin-top:6px" onclick="applySkillCategories()">Apply</button>
-          </div>
         </div>
       </div>
       <div class="card">
@@ -270,6 +285,31 @@ textarea.letter-output{min-height:350px;font-family:Georgia,'Times New Roman',se
           <button class="btn btn-secondary btn-sm" onclick="downloadResumeDoc()">?? Download .doc</button>
           <button class="btn btn-secondary btn-sm" onclick="downloadResumePdf()">?? Download .pdf</button>
         </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="skill-cat-editor" id="skillCatEditor">
+  <div class="skill-cat-modal" onclick="if(event.target===this)toggleSkillCatEditor()">
+    <div class="modal-inner">
+      <div class="modal-head">
+        <h2>Edit Skill Categories</h2>
+        <button class="close-btn" onclick="toggleSkillCatEditor()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size:.85rem;color:var(--text-dim);margin-bottom:16px;">Define how skills are grouped. Each category has a name and comma-separated keywords for auto-detection.</p>
+        <div class="skill-cat-header">
+          <span class="cat-name">Category Name</span>
+          <span class="cat-keywords">Keywords (comma separated)</span>
+          <span style="width:36px"></span>
+        </div>
+        <div id="skillCatList"></div>
+        <button class="btn btn-secondary btn-sm" style="margin-top:12px" onclick="addSkillCategory()">+ Add Category</button>
+      </div>
+      <div class="modal-foot">
+        <button class="btn btn-secondary" onclick="toggleSkillCatEditor()">Cancel</button>
+        <button class="btn btn-primary" onclick="applySkillCategories()">Apply & Save</button>
       </div>
     </div>
   </div>
@@ -1221,12 +1261,13 @@ var _customSkillCats=[
 ];
 function toggleSkillCatEditor(){
   var el=document.getElementById('skillCatEditor');el.classList.toggle('active');
-  if(el.classList.contains('active'))renderSkillCatEditor();
+  if(el.classList.contains('active')){renderSkillCatEditor();document.body.style.overflow='hidden'}
+  else{document.body.style.overflow=''}
 }
 function renderSkillCatEditor(){
   var html='';
   for(var i=0;i<_customSkillCats.length;i++){
-    html+='<div class="skill-cat-row"><input type="text" value="'+_customSkillCats[i].name+'" data-idx="'+i+'" class="cat-name-input" placeholder="Category name"><input type="text" value="'+_customSkillCats[i].keywords.join(', ')+'" data-idx="'+i+'" class="cat-keywords-input" placeholder="Keywords (comma separated)"><button class="btn btn-secondary btn-sm" onclick="removeSkillCat('+i+')">X</button></div>';
+    html+='<div class="skill-cat-row"><div class="cat-name"><input type="text" value="'+(_customSkillCats[i].name||'').replace(/"/g,'&quot;')+'" data-idx="'+i+'" class="cat-name-input" placeholder="e.g. Languages"></div><div class="cat-keywords"><input type="text" value="'+(_customSkillCats[i].keywords||[]).join(', ').replace(/"/g,'&quot;')+'" data-idx="'+i+'" class="cat-keywords-input" placeholder="e.g. javascript, python, java"></div><button class="cat-remove" onclick="removeSkillCat('+i+')">&times;</button></div>';
   }
   document.getElementById('skillCatList').innerHTML=html;
 }
@@ -1235,14 +1276,15 @@ function removeSkillCat(idx){_customSkillCats.splice(idx,1);renderSkillCatEditor
 function applySkillCategories(){
   var nameInputs=document.querySelectorAll('.cat-name-input');
   var kwInputs=document.querySelectorAll('.cat-keywords-input');
+  _customSkillCats=[];
   for(var i=0;i<nameInputs.length;i++){
-    _customSkillCats[i].name=nameInputs[i].value;
-    _customSkillCats[i].keywords=kwInputs[i].value.split(',').map(function(s){return s.trim().toLowerCase()}).filter(function(s){return s.length>0});
+    _customSkillCats.push({name:nameInputs[i].value,keywords:kwInputs[i].value.split(',').map(function(s){return s.trim().toLowerCase()}).filter(function(s){return s.length>0})});
   }
   if(_resumeData&&_resumeData.skills){
     _resumeData.categorizedSkills=categorizeWithCustom(_resumeData.skills);
     renderResumePreview();
   }
+  toggleSkillCatEditor();
   showToast('Skill categories updated!','success');
 }
 function categorizeWithCustom(skills){
