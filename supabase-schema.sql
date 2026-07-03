@@ -3,13 +3,14 @@
 -- Run this in your Supabase SQL Editor
 -- =====================================================
 
--- Profiles table (stores user info + resume)
+-- Profiles table (stores user info + resume + skills)
 CREATE TABLE IF NOT EXISTS public.profiles (
   id UUID REFERENCES auth.users PRIMARY KEY,
   name TEXT,
   email TEXT,
   phone TEXT,
   resume_text TEXT,
+  skills JSONB DEFAULT '[]'::jsonb,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );

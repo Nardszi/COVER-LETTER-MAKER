@@ -89,7 +89,9 @@ textarea.letter-output{min-height:350px;font-family:Georgia,'Times New Roman',se
 .fixed-resume-output .resume-bullet{margin-left:18px;font-size:10pt;line-height:1.45;text-indent:-9pt;padding-left:9pt}
 .fixed-resume-output .resume-summary{font-size:10.5pt;line-height:1.5;margin-bottom:4px}
 .fixed-resume-output .resume-skill-matched{background:#dbeafe;color:#1e40af;font-weight:600;padding:1px 4px;border-radius:2px}
-.fixed-resume-output .resume-skills-line{font-size:10pt;line-height:1.6}
+.fixed-resume-output .resume-skills-line{font-size:10pt;line-height:1.6;display:flex;flex-wrap:wrap;gap:4px 0}
+.fixed-resume-output .resume-skill-item{display:inline}
+.fixed-resume-output .resume-skill-sep{display:inline;color:#888;margin:0 6px}
 .config-notice{background:rgba(251,191,36,.1);border:1px solid rgba(251,191,36,.3);border-radius:var(--radius-sm);padding:16px;margin-bottom:20px;font-size:.85rem;color:#fbbf24;display:none}
 .toast{position:fixed;bottom:24px;right:24px;background:var(--card);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px 20px;font-size:.875rem;color:var(--text-bright);box-shadow:0 8px 32px rgba(0,0,0,.4);z-index:2000;display:none;animation:slideIn .3s ease}
 .toast.show{display:block}
@@ -269,11 +271,33 @@ async function handleAuth(){
 async function signOut(){await supabase.auth.signOut();currentUser=null;updateAuthUI();document.getElementById('historyList').innerHTML='';showToast('Signed out.','success')}
 async function saveProfile(){
   if(!currentUser||!supabase)return;
-  try{await supabase.from('profiles').upsert({id:currentUser.id,name:document.getElementById('userName').value.trim(),email:document.getElementById('userEmailInput').value.trim(),phone:document.getElementById('userPhone').value.trim(),resume_text:document.getElementById('resumeInput').value.trim(),updated_at:new Date().toISOString()},{onConflict:'id'})}catch(e){}
+  try{
+    var skillsArr=[];
+    if(_resumeData&&_resumeData.skills)skillsArr=_resumeData.skills;
+    await supabase.from('profiles').upsert({
+      id:currentUser.id,
+      name:document.getElementById('userName').value.trim(),
+      email:document.getElementById('userEmailInput').value.trim(),
+      phone:document.getElementById('userPhone').value.trim(),
+      resume_text:document.getElementById('resumeInput').value.trim(),
+      skills:skillsArr,
+      updated_at:new Date().toISOString()
+    },{onConflict:'id'})
+  }catch(e){}
 }
 async function loadProfile(){
   if(!currentUser||!supabase)return;
-  try{var{data,error}=await supabase.from('profiles').select('*').eq('id',currentUser.id).single();if(error||!data)return;document.getElementById('userName').value=data.name||'';document.getElementById('userEmailInput').value=data.email||'';document.getElementById('userPhone').value=data.phone||'';document.getElementById('resumeInput').value=data.resume_text||''}catch(e){}
+  try{
+    var{data,error}=await supabase.from('profiles').select('*').eq('id',currentUser.id).single();
+    if(error||!data)return;
+    document.getElementById('userName').value=data.name||'';
+    document.getElementById('userEmailInput').value=data.email||'';
+    document.getElementById('userPhone').value=data.phone||'';
+    document.getElementById('resumeInput').value=data.resume_text||'';
+    if(data.skills&&Array.isArray(data.skills)&&data.skills.length>0){
+      _resumeData={name:data.name||'',contact:[],summary:'',skills:data.skills,matchedSkills:[],experience:[],education:[],other:[],jdKeywords:[]};
+    }
+  }catch(e){}
 }
 ['userName','userEmailInput','userPhone','resumeInput'].forEach(function(id){var el=document.getElementById(id);if(el)el.addEventListener('input',debounce(saveProfile,1000))});
 
@@ -517,10 +541,13 @@ function parseResumeSections(txt){
     }
     else if(cur.match(/^SKILL|^TECH|^CORE|^COMPETENC|^EXPERT|^TECHNOLOG/i)){
       var skillStr=l.replace(/^• /,'');
-      var skillParts=skillStr.split(/[•·,;|\/]/);
+      // Split on multiple separators: comma, semicolon, pipe, slash, bullet, colon
+      var skillParts=skillStr.split(/[•·,;|\/:]\s*/);
       for(var j=0;j<skillParts.length;j++){
-        var s=skillParts[j].trim();
-        if(s.length>1 && s.length<80)sec.skills.push(s);
+        var s=skillParts[j].trim().replace(/^[\s\-]+/,'').replace(/[\s\-]+$/,'');
+        // Remove surrounding brackets/parentheses
+        s=s.replace(/^[\[\(\{]\s*/,'').replace(/\s*[\]\)\}]$/,'');
+        if(s.length>1 && s.length<60)sec.skills.push(s);
       }
     }
     else if(cur.match(/^EXPER|^WORK|^EMPLOY|^PROFESSIONAL EXP/i)){
@@ -592,8 +619,17 @@ function fixResume(){
   if(!resume){showToast('Paste or upload a resume first.','error');return}
   var jdKeywords=jd?extractSkills(jd):[],jdLower=jdKeywords.map(function(s){return s.toLowerCase()});
   var sections=parseResumeSections(resume);
-  var allSkillLines=sections.skills.join(',').split(/[,;•\n|/]/).map(function(s){return s.trim()}).filter(function(s){return s.length>1});
-  var allSkills=allSkillLines.map(function(s){return s.charAt(0).toUpperCase()+s.slice(1)});
+  // Deduplicate skills
+  var allSkillSet=new Set();
+  var allSkills=[];
+  for(var i=0;i<sections.skills.length;i++){
+    var sk=sections.skills[i].trim();
+    if(sk.length>1 && sk.length<60 && !allSkillSet.has(sk.toLowerCase())){
+      allSkillSet.add(sk.toLowerCase());
+      allSkills.push(sk.charAt(0).toUpperCase()+sk.slice(1));
+    }
+  }
+  allSkillSet.clear();
   var matchedSkills=[],unmatchedSkills=[],skillSet=new Set();
   for(var i=0;i<allSkills.length;i++){
     var isMatch=false;
@@ -646,7 +682,11 @@ function fixResume(){
 
   if(sortedSkills.length>0){
     h+='<div class="resume-section-title">SKILLS</div><div class="resume-skills-line">';
-    for(var i=0;i<sortedSkills.length;i++){if(i>0)h+='  •  ';if(matchedSkills.indexOf(sortedSkills[i])!==-1)h+='<span class="resume-skill-matched">'+escH(sortedSkills[i])+'</span>';else h+=escH(sortedSkills[i])}
+    for(var i=0;i<sortedSkills.length;i++){
+      if(i>0)h+='<span class="resume-skill-sep">•</span>';
+      if(matchedSkills.indexOf(sortedSkills[i])!==-1)h+='<span class="resume-skill-item resume-skill-matched">'+escH(sortedSkills[i])+'</span>';
+      else h+='<span class="resume-skill-item">'+escH(sortedSkills[i])+'</span>';
+    }
     h+='</div>'
   }
 
@@ -675,6 +715,10 @@ function fixResume(){
 
   document.getElementById('fixedResumeOutput').innerHTML=h;
   showToast('Resume fixed! Matched '+matchedSkills.length+' skills.','success')
+  // Save skills to database
+  if(currentUser&&supabase){
+    try{supabase.from('profiles').upsert({id:currentUser.id,skills:sortedSkills,updated_at:new Date().toISOString()},{onConflict:'id'})}catch(e){}
+  }
 }
 
 function downloadResumeDoc(){
@@ -724,7 +768,7 @@ function downloadResumeDoc(){
     body+='<p style="'+S.sectionHeader+'">Technical Skills</p>';
     var skillHtml='';
     for(var i=0;i<d.skills.length;i++){
-      if(i>0)skillHtml+=' &bull; ';
+      if(i>0)skillHtml+=' <span style="color:#888;margin:0 4pt;">•</span> ';
       skillHtml+=e(d.skills[i]);
     }
     body+='<p style="'+S.skillLine+'">'+skillHtml+'</p>';
