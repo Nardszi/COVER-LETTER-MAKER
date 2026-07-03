@@ -1,0 +1,878 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cover Letter Generator</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>??</text></svg>">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #0a0a1a;
+  --surface: #12122a;
+  --card: #1a1a3e;
+  --border: #2a2a5a;
+  --text: #d0d0e0;
+  --text-dim: #8888aa;
+  --text-bright: #f0f0ff;
+  --accent: #3b82f6;
+  --accent-hover: #2563eb;
+  --green: #10b981;
+  --red: #ef4444;
+  --radius: 12px;
+  --radius-sm: 8px;
+  --font: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+}
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  line-height: 1.6;
+}
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--surface); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #3a3a6a; }
+.nav {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 16px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  backdrop-filter: blur(12px);
+}
+.nav h1 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-bright);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.nav h1 span { color: var(--accent); }
+.nav-actions { display: flex; align-items: center; gap: 12px; }
+.nav-actions .user-email {
+  font-size: 0.85rem;
+  color: var(--text-dim);
+  display: none;
+}
+.btn {
+  padding: 8px 18px;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: var(--font);
+}
+.btn-primary { background: var(--accent); color: #fff; }
+.btn-primary:hover { background: var(--accent-hover); transform: translateY(-1px); }
+.btn-secondary { background: var(--card); color: var(--text); border: 1px solid var(--border); }
+.btn-secondary:hover { background: var(--border); }
+.btn-green { background: var(--green); color: #fff; }
+.btn-green:hover { filter: brightness(1.1); transform: translateY(-1px); }
+.btn-sm { padding: 6px 14px; font-size: 0.8rem; }
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px;
+}
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  align-items: start;
+}
+@media (max-width: 900px) {
+  .grid { grid-template-columns: 1fr; }
+  .container { padding: 16px; }
+}
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px;
+}
+.card h2 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-bright);
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.card h2 .badge {
+  font-size: 0.7rem;
+  font-weight: 500;
+  background: var(--card);
+  color: var(--text-dim);
+  padding: 2px 10px;
+  border-radius: 999px;
+}
+.form-group { margin-bottom: 16px; }
+.form-group label {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text-dim);
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 12px;
+}
+@media (max-width: 600px) {
+  .form-row { grid-template-columns: 1fr; }
+}
+input, textarea, select {
+  width: 100%;
+  padding: 10px 14px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font-size: 0.9rem;
+  font-family: var(--font);
+  transition: border-color 0.2s;
+  outline: none;
+}
+input:focus, textarea:focus, select:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+textarea {
+  resize: vertical;
+  min-height: 120px;
+  line-height: 1.5;
+}
+textarea.resume-input { min-height: 180px; }
+textarea.jd-input { min-height: 180px; }
+textarea.letter-output {
+  min-height: 350px;
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 0.95rem;
+  line-height: 1.7;
+}
+.gen-area {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+.gen-area .btn { flex: 1; min-width: 140px; padding: 12px 20px; font-size: 0.95rem; }
+.output-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 16px;
+}
+.modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  backdrop-filter: blur(4px);
+  z-index: 1000;
+  justify-content: center;
+  align-items: center;
+}
+.modal-overlay.active { display: flex; }
+.modal {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 32px;
+  width: 400px;
+  max-width: 90vw;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+.modal h2 {
+  font-size: 1.2rem;
+  color: var(--text-bright);
+  margin-bottom: 8px;
+}
+.modal p { color: var(--text-dim); font-size: 0.9rem; margin-bottom: 20px; }
+.modal .form-group { margin-bottom: 14px; }
+.modal .btn { width: 100%; margin-top: 8px; }
+.modal .switch-link {
+  text-align: center;
+  margin-top: 14px;
+  font-size: 0.85rem;
+  color: var(--text-dim);
+}
+.modal .switch-link a {
+  color: var(--accent);
+  cursor: pointer;
+  text-decoration: none;
+}
+.modal .switch-link a:hover { text-decoration: underline; }
+.modal .error-msg {
+  color: var(--red);
+  font-size: 0.85rem;
+  margin-top: 8px;
+  display: none;
+}
+.history-list {
+  margin-top: 24px;
+}
+.history-list h2 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-bright);
+  margin-bottom: 12px;
+}
+.history-item {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 12px 16px;
+  margin-bottom: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.history-item:hover {
+  border-color: var(--accent);
+  background: #1e1e44;
+}
+.history-item .title { font-weight: 600; color: var(--text-bright); font-size: 0.9rem; }
+.history-item .meta { font-size: 0.8rem; color: var(--text-dim); }
+.history-item .del-btn {
+  background: none; border: none; color: var(--red); cursor: pointer;
+  font-size: 1rem; padding: 4px; opacity: 0.5; transition: opacity 0.2s;
+}
+.history-item .del-btn:hover { opacity: 1; }
+.toast {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 14px 20px;
+  font-size: 0.875rem;
+  color: var(--text-bright);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+  z-index: 2000;
+  display: none;
+  animation: slideIn 0.3s ease;
+}
+.toast.show { display: block; }
+.toast.success { border-color: var(--green); }
+.toast.error { border-color: var(--red); }
+@keyframes slideIn {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+.spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255,255,255,0.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+  vertical-align: middle;
+  margin-right: 6px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.empty-state {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--text-dim);
+}
+.empty-state .icon { font-size: 3rem; margin-bottom: 12px; }
+.empty-state p { font-size: 0.9rem; }
+.config-notice {
+  background: rgba(251, 191, 36, 0.1);
+  border: 1px solid rgba(251, 191, 36, 0.3);
+  border-radius: var(--radius-sm);
+  padding: 16px;
+  margin-bottom: 20px;
+  font-size: 0.85rem;
+  color: #fbbf24;
+  display: none;
+}
+</style>
+</head>
+<body>
+<nav class="nav">
+  <h1><span>?</span> Cover Letter Generator</h1>
+  <div class="nav-actions">
+    <span class="user-email" id="userEmail"></span>
+    <button class="btn btn-primary btn-sm auth-btn" id="authBtn" onclick="openAuth()">Sign In</button>
+    <button class="btn btn-secondary btn-sm" id="logoutBtn" style="display:none" onclick="signOut()">Sign Out</button>
+  </div>
+</nav>
+
+<div class="container">
+  <div class="config-notice" id="configNotice">
+    ? Supabase not configured. Set your <strong>SUPABASE_URL</strong> and <strong>SUPABASE_ANON_KEY</strong> in the script to enable cloud saving. The generator works offline without it.
+  </div>
+
+  <div class="grid">
+    <div class="card">
+      <h2>Your Info <span class="badge">Saved to your account</span></h2>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Name</label>
+          <input type="text" id="userName" placeholder="John Doe">
+        </div>
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" id="userEmailInput" placeholder="john@email.com">
+        </div>
+        <div class="form-group">
+          <label>Phone</label>
+          <input type="tel" id="userPhone" placeholder="+1 (555) 123-4567">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Paste Your Resume</label>
+        <textarea class="resume-input" id="resumeInput" placeholder="Paste your full resume here..."></textarea>
+      </div>
+      <div class="form-group">
+        <label>Paste Job Description</label>
+        <textarea class="jd-input" id="jdInput" placeholder="Paste the job description here..."></textarea>
+      </div>
+      <div class="gen-area">
+        <button class="btn btn-primary" id="genBtn" onclick="generateCoverLetter()">? Generate Cover Letter</button>
+        <button class="btn btn-secondary" id="clearBtn" onclick="clearAll()">Clear All</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Cover Letter <span class="badge">Editable</span></h2>
+      <textarea class="letter-output" id="letterOutput" placeholder="Your cover letter will appear here..." readonly style="cursor:default;"></textarea>
+      <div class="output-actions">
+        <button class="btn btn-secondary btn-sm" onclick="downloadTxt()">?? Download .txt</button>
+        <button class="btn btn-secondary btn-sm" onclick="downloadDoc()">?? Download .doc</button>
+        <button class="btn btn-green btn-sm" id="saveLetterBtn" onclick="saveLetter()" style="display:none">?? Save to Account</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" id="historySection" style="margin-top:24px; display:none;">
+    <h2>?? Cover Letter History</h2>
+    <div id="historyList"></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="authModal">
+  <div class="modal">
+    <h2 id="authModalTitle">Sign In</h2>
+    <p id="authModalDesc">Sign in to save your profile and cover letters.</p>
+    <div class="form-group">
+      <label>Email</label>
+      <input type="email" id="authEmail" placeholder="you@email.com">
+    </div>
+    <div class="form-group">
+      <label>Password</label>
+      <input type="password" id="authPassword" placeholder="At least 6 characters">
+    </div>
+    <div class="error-msg" id="authError"></div>
+    <button class="btn btn-primary" id="authSubmitBtn" onclick="handleAuth()">Sign In</button>
+    <div class="switch-link">
+      <span id="authSwitchText">Don't have an account?</span>
+      <a id="authSwitchLink" onclick="toggleAuthMode()">Sign Up</a>
+    </div>
+    <div class="switch-link" style="margin-top:8px;">
+      <a onclick="closeAuth()" style="color:var(--text-dim);">Close</a>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const SUPABASE_URL = 'https://qsbasmcjpjvgpuyhfyia.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFzYmFzbWNqcGp2Z3B1eWhmeWlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMwNTIxMTUsImV4cCI6MjA5ODYyODExNX0.C941_wofmCz3l0ZgF7Rp93kzYRHlAePpmLBRZ6l31t4';
+
+let supabase = null;
+let currentUser = null;
+let authMode = 'signin';
+
+function initSupabase() {
+  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+    document.getElementById('configNotice').style.display = 'block';
+    return;
+  }
+  supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  checkSession();
+}
+
+async function checkSession() {
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session) {
+      currentUser = session.user;
+      updateAuthUI();
+      loadProfile();
+      loadHistory();
+    }
+  } catch (e) { console.warn('Supabase init error:', e); }
+}
+
+function updateAuthUI() {
+  const authBtn = document.getElementById('authBtn');
+  const logoutBtn = document.getElementById('logoutBtn');
+  const userEmail = document.getElementById('userEmail');
+  const saveBtn = document.getElementById('saveLetterBtn');
+  if (currentUser) {
+    authBtn.style.display = 'none';
+    logoutBtn.style.display = 'inline-flex';
+    userEmail.textContent = currentUser.email;
+    userEmail.style.display = 'inline';
+    saveBtn.style.display = 'inline-flex';
+    document.getElementById('historySection').style.display = 'block';
+  } else {
+    authBtn.style.display = 'inline-flex';
+    logoutBtn.style.display = 'none';
+    userEmail.style.display = 'none';
+    saveBtn.style.display = 'none';
+    document.getElementById('historySection').style.display = 'none';
+  }
+}
+
+function openAuth() {
+  authMode = 'signin';
+  document.getElementById('authModalTitle').textContent = 'Sign In';
+  document.getElementById('authModalDesc').textContent = 'Sign in to save your profile and cover letters.';
+  document.getElementById('authSubmitBtn').textContent = 'Sign In';
+  document.getElementById('authSwitchText').textContent = "Don't have an account?";
+  document.getElementById('authSwitchLink').textContent = 'Sign Up';
+  document.getElementById('authError').style.display = 'none';
+  document.getElementById('authEmail').value = '';
+  document.getElementById('authPassword').value = '';
+  document.getElementById('authModal').classList.add('active');
+}
+
+function closeAuth() {
+  document.getElementById('authModal').classList.remove('active');
+}
+
+function toggleAuthMode() {
+  authMode = authMode === 'signin' ? 'signup' : 'signin';
+  const title = document.getElementById('authModalTitle');
+  const desc = document.getElementById('authModalDesc');
+  const btn = document.getElementById('authSubmitBtn');
+  const switchText = document.getElementById('authSwitchText');
+  const switchLink = document.getElementById('authSwitchLink');
+  if (authMode === 'signin') {
+    title.textContent = 'Sign In';
+    desc.textContent = 'Sign in to save your profile and cover letters.';
+    btn.textContent = 'Sign In';
+    switchText.textContent = "Don't have an account?";
+    switchLink.textContent = 'Sign Up';
+  } else {
+    title.textContent = 'Sign Up';
+    desc.textContent = 'Create an account to save your profile and cover letters.';
+    btn.textContent = 'Sign Up';
+    switchText.textContent = 'Already have an account?';
+    switchLink.textContent = 'Sign In';
+  }
+  document.getElementById('authError').style.display = 'none';
+}
+
+async function handleAuth() {
+  const email = document.getElementById('authEmail').value.trim();
+  const password = document.getElementById('authPassword').value;
+  const errorEl = document.getElementById('authError');
+  if (!email || !password) {
+    errorEl.textContent = 'Please fill in all fields.';
+    errorEl.style.display = 'block';
+    return;
+  }
+  if (password.length < 6) {
+    errorEl.textContent = 'Password must be at least 6 characters.';
+    errorEl.style.display = 'block';
+    return;
+  }
+  const btn = document.getElementById('authSubmitBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Processing...';
+  try {
+    let result;
+    if (authMode === 'signin') {
+      result = await supabase.auth.signInWithPassword({ email, password });
+    } else {
+      result = await supabase.auth.signUp({ email, password });
+    }
+    if (result.error) {
+      errorEl.textContent = result.error.message;
+      errorEl.style.display = 'block';
+      btn.disabled = false;
+      btn.textContent = authMode === 'signin' ? 'Sign In' : 'Sign Up';
+      return;
+    }
+    if (authMode === 'signup' && result.data.user?.identities?.length === 0) {
+      errorEl.textContent = 'An account with this email already exists. Please sign in.';
+      errorEl.style.display = 'block';
+      btn.disabled = false;
+      btn.textContent = 'Sign Up';
+      return;
+    }
+    currentUser = result.data.user || result.data.session?.user;
+    closeAuth();
+    updateAuthUI();
+    if (currentUser) {
+      loadProfile();
+      loadHistory();
+      showToast('Signed in successfully!', 'success');
+    }
+  } catch (e) {
+    errorEl.textContent = 'Something went wrong. Please try again.';
+    errorEl.style.display = 'block';
+  }
+  btn.disabled = false;
+  btn.textContent = authMode === 'signin' ? 'Sign In' : 'Sign Up';
+}
+
+async function signOut() {
+  await supabase.auth.signOut();
+  currentUser = null;
+  updateAuthUI();
+  document.getElementById('historyList').innerHTML = '';
+  showToast('Signed out.', 'success');
+}
+
+async function saveProfile() {
+  if (!currentUser || !supabase) return;
+  const name = document.getElementById('userName').value.trim();
+  const email = document.getElementById('userEmailInput').value.trim();
+  const phone = document.getElementById('userPhone').value.trim();
+  const resume = document.getElementById('resumeInput').value.trim();
+  try {
+    const { error } = await supabase.from('profiles').upsert({
+      id: currentUser.id,
+      name, email, phone,
+      resume_text: resume,
+      updated_at: new Date().toISOString()
+    }, { onConflict: 'id' });
+    if (error) console.warn('Profile save error:', error);
+  } catch (e) {}
+}
+
+async function loadProfile() {
+  if (!currentUser || !supabase) return;
+  try {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', currentUser.id)
+      .single();
+    if (error || !data) return;
+    document.getElementById('userName').value = data.name || '';
+    document.getElementById('userEmailInput').value = data.email || '';
+    document.getElementById('userPhone').value = data.phone || '';
+    document.getElementById('resumeInput').value = data.resume_text || '';
+  } catch (e) {}
+}
+
+['userName','userEmailInput','userPhone','resumeInput'].forEach(id => {
+  document.getElementById(id).addEventListener('input', debounce(saveProfile, 1000));
+});
+
+function extractJobInfo(text) {
+  let title = '';
+  let company = '';
+  const lines = text.split('\n').filter(l => l.trim());
+  const titlePatterns = [
+    /(?:job\s*title|position|role|we\s*are\s*hiring\s*a\s*n?|title)\s*:?\s*(.+)/i,
+    /(?:seeking|hiring|looking\s*for|need\s*a\s*n?)\s*(.+?)(?:\s*at\s*|\s*with\s*|\s*for\s*|$)/i,
+    /^(?:senior|junior|lead|principal|staff|head\s*of)?\s*(.+?)\s*(?:engineer|developer|designer|manager|analyst|specialist|architect|consultant|coordinator|associate|director)/i
+  ];
+  for (const p of titlePatterns) {
+    const m = text.match(p);
+    if (m && m[1]) { title = m[1].trim(); break; }
+  }
+  if (!title) {
+    for (const line of lines.slice(0, 5)) {
+      const clean = line.replace(/^[#*\-]\s*/, '').trim();
+      if (clean.length > 10 && clean.length < 80 && /[A-Z]/.test(clean[0]) && !clean.endsWith('.')) {
+        title = clean; break;
+      }
+    }
+  }
+  const companyPatterns = [
+    /(?:at|with|for|join)\s+([A-Z][A-Za-z0-9\s&.]+?)(?:\s*(?:is\s*(?:looking|seeking|hiring)|team|\||\n|\.|,|\s*$))/i,
+    /(?:company|organization|firm)\s*:?\s*(.+)/i,
+    /(?:about|our)\s+company\b[\s\S]{0,50}?([A-Z][A-Za-z0-9\s&.]{3,40})/i
+  ];
+  for (const p of companyPatterns) {
+    const m = text.match(p);
+    if (m && m[1]) { company = m[1].trim(); break; }
+  }
+  if (!company) {
+    for (const line of lines) {
+      const match = line.match(/(?:at|with|for)\s+([A-Z][a-zA-Z0-9]+(?:\s+[A-Z][a-zA-Z0-9]+)+)/);
+      if (match) { company = match[1].trim(); break; }
+    }
+  }
+  return { title: title || 'the position', company: company || 'your company' };
+}
+
+const skillKeywords = [
+  'JavaScript','TypeScript','Python','Java','C#','C\\+\\+','Ruby','Go','Rust','Swift','Kotlin','PHP',
+  'React','Angular','Vue','Next\\.?js','Node\\.?js','Express','Django','Flask','Spring','REST','GraphQL',
+  'HTML','CSS','Sass','Tailwind','Bootstrap','jQuery',
+  'SQL','PostgreSQL','MySQL','MongoDB','Redis','Firebase','Supabase',
+  'AWS','Azure','GCP','Docker','Kubernetes','CI/CD','Git',
+  'Excel','Tableau','Power BI','Figma','Photoshop','Jira','Confluence',
+  'leadership','management','communication','teamwork','problem.solving','analysis'
+];
+
+function extractSkills(text) {
+  const found = [];
+  for (const skill of skillKeywords) {
+    const re = new RegExp('\\b' + skill.replace(/\\\\/g,'\\') + '\\b', 'i');
+    if (re.test(text)) found.push(skill.replace(/\\\\/g,''));
+  }
+  const reqSection = text.match(/(?:requirements?|qualifications?|you\s+(?:have|bring|should)\s*(?:have)?)\s*:?([\s\S]*?)(?:\n\n|\n#|$)/i);
+  if (reqSection) {
+    const reqBullets = reqSection[1].split('\n').filter(l => l.trim());
+    for (const line of reqBullets) {
+      const clean = line.replace(/^[\s\-*\d.]+\s*/, '').trim();
+      if (clean.length > 5 && clean.length < 100 && !found.includes(clean)) found.push(clean);
+    }
+  }
+  return [...new Set(found)].slice(0, 8);
+}
+
+function extractResumeSkills(text) {
+  const skills = extractSkills(text);
+  const skillsSection = text.match(/skills?\s*:?([\s\S]*?)(?:\n\n|\n[A-Z]|\n-{3}|$)/i);
+  if (skillsSection) {
+    const parts = skillsSection[1].split(/[,•\n|/]/);
+    for (const p of parts) {
+      const clean = p.trim();
+      if (clean.length > 1 && clean.length < 50) skills.push(clean);
+    }
+  }
+  return [...new Set(skills)];
+}
+
+function extractExperience(text) {
+  const exp = [];
+  const lines = text.split('\n').filter(l => l.trim());
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim();
+    const m = line.match(/^(.+?)\s+(?:at|@|–|-)\s+(.+?)(?:\s*[(\[]|$)/);
+    if (m) {
+      const role = m[1].trim();
+      const org = m[2].trim();
+      const achievements = [];
+      for (let j = i + 1; j < Math.min(i + 4, lines.length); j++) {
+        const next = lines[j].trim();
+        if (/^[\s\-*\d.]/.test(next) && next.replace(/^[\s\-*\d.]+\s*/, '').length > 10) {
+          achievements.push(next.replace(/^[\s\-*\d.]+\s*/, ''));
+        } else if (/^[A-Z]/.test(next) && next.includes(' at ')) break;
+      }
+      exp.push({ role, org, achievements });
+    }
+  }
+  return exp;
+}
+
+function generateCoverLetter() {
+  const jd = document.getElementById('jdInput').value.trim();
+  const resume = document.getElementById('resumeInput').value.trim();
+  const name = document.getElementById('userName').value.trim() || 'Applicant';
+  const email = document.getElementById('userEmailInput').value.trim();
+  const phone = document.getElementById('userPhone').value.trim();
+  if (!jd) { showToast('Please paste a job description first.', 'error'); return; }
+  const { title, company } = extractJobInfo(jd);
+  const jdSkills = extractSkills(jd);
+  const resumeSkills = extractResumeSkills(resume);
+  const experience = extractExperience(resume);
+  const matched = jdSkills.filter(s =>
+    resumeSkills.some(rs => rs.toLowerCase().includes(s.toLowerCase()) || s.toLowerCase().includes(rs.toLowerCase()))
+  );
+  let letter = '';
+  const contact = [name];
+  if (email) contact.push(email);
+  if (phone) contact.push(phone);
+  letter += contact.join('  |  ') + '\n';
+  letter += ''.padStart(contact.join('  |  ').length, '\u2014') + '\n\n';
+  const month = new Date().toLocaleString('en-US', { month: 'long' });
+  const day = new Date().getDate();
+  const year = new Date().getFullYear();
+  letter += month + ' ' + day + ', ' + year + '\n\n';
+  letter += 'Dear Hiring Manager,\n\n';
+  letter += 'I am writing to express my strong interest in the ' + title + ' position at ' + company + '. ';
+  if (resume) {
+    if (experience.length > 0) {
+      const exp = experience[0];
+      letter += 'In my role as ' + exp.role + ' at ' + exp.org + ', I developed expertise that directly aligns with this opportunity. ';
+      if (exp.achievements.length > 0) {
+        letter += 'For example, ' + exp.achievements[0].charAt(0).toLowerCase() + exp.achievements[0].slice(1) + '. ';
+      }
+    }
+    if (matched.length > 0) {
+      letter += '\n\nMy experience with ' + matched.slice(0, 4).join(', ') + ' matches your requirements. ';
+    }
+    letter += 'I am eager to bring this skillset to ' + company + ' and contribute to your team\'s success.';
+  } else {
+    letter += 'I am confident that my background and enthusiasm make me a strong candidate for this role.';
+    letter += '\n\nI would welcome the opportunity to discuss how my experience aligns with the needs of your team.';
+  }
+  letter += '\n\nThank you for considering my application. I look forward to the opportunity to speak with you about how I can contribute to ' + company + '.\n\n';
+  letter += 'Best regards,\n' + name;
+  const output = document.getElementById('letterOutput');
+  output.value = letter;
+  output.style.cursor = 'text';
+  output.removeAttribute('readonly');
+  showToast('Cover letter generated!', 'success');
+}
+
+async function saveLetter() {
+  if (!currentUser || !supabase) { showToast('Sign in to save cover letters.', 'error'); return; }
+  const letter = document.getElementById('letterOutput').value.trim();
+  const jd = document.getElementById('jdInput').value.trim();
+  if (!letter || letter === document.getElementById('letterOutput').placeholder) {
+    showToast('Generate a cover letter first.', 'error'); return;
+  }
+  const { title, company } = extractJobInfo(jd);
+  try {
+    const { error } = await supabase.from('cover_letters').insert({
+      user_id: currentUser.id,
+      job_description: jd,
+      job_title: title,
+      company: company,
+      cover_letter: letter
+    });
+    if (error) throw error;
+    showToast('Cover letter saved!', 'success');
+    loadHistory();
+  } catch (e) { showToast('Error saving: ' + e.message, 'error'); }
+}
+
+async function loadHistory() {
+  if (!currentUser || !supabase) return;
+  try {
+    const { data, error } = await supabase
+      .from('cover_letters')
+      .select('*')
+      .eq('user_id', currentUser.id)
+      .order('created_at', { ascending: false })
+      .limit(20);
+    if (error) throw error;
+    const container = document.getElementById('historyList');
+    if (!data || data.length === 0) {
+      container.innerHTML = '<div class="empty-state"><div class="icon">??</div><p>No saved cover letters yet.</p></div>';
+      return;
+    }
+    container.innerHTML = data.map(function(cl) {
+      return '<div class="history-item" onclick="loadHistoryLetter(\'' + cl.id + '\')">' +
+        '<div><div class="title">' + escapeHtml(cl.job_title || 'Untitled') + ' at ' + escapeHtml(cl.company || 'Unknown') + '</div>' +
+        '<div class="meta">' + new Date(cl.created_at).toLocaleDateString() + '  Click to load</div></div>' +
+        '<button class="del-btn" onclick="event.stopPropagation(); deleteLetter(\'' + cl.id + '\')" title="Delete">?</button></div>';
+    }).join('');
+  } catch (e) { console.warn('Load history error:', e); }
+}
+
+async function loadHistoryLetter(id) {
+  if (!supabase) return;
+  try {
+    const { data, error } = await supabase.from('cover_letters').select('*').eq('id', id).single();
+    if (error || !data) throw error || new Error('Not found');
+    document.getElementById('jdInput').value = data.job_description || '';
+    document.getElementById('letterOutput').value = data.cover_letter || '';
+    document.getElementById('letterOutput').style.cursor = 'text';
+    document.getElementById('letterOutput').removeAttribute('readonly');
+    showToast('Loaded saved cover letter.', 'success');
+  } catch (e) { showToast('Error loading letter.', 'error'); }
+}
+
+async function deleteLetter(id) {
+  if (!supabase || !confirm('Delete this cover letter?')) return;
+  try {
+    const { error } = await supabase.from('cover_letters').delete().eq('id', id);
+    if (error) throw error;
+    showToast('Deleted.', 'success');
+    loadHistory();
+  } catch (e) { showToast('Error deleting.', 'error'); }
+}
+
+function downloadTxt() {
+  const text = document.getElementById('letterOutput').value;
+  if (!text || text === document.getElementById('letterOutput').placeholder) {
+    showToast('Generate a cover letter first.', 'error'); return;
+  }
+  const blob = new Blob([text], { type: 'text/plain' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'cover-letter.txt';
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+function downloadDoc() {
+  const text = document.getElementById('letterOutput').value;
+  if (!text || text === document.getElementById('letterOutput').placeholder) {
+    showToast('Generate a cover letter first.', 'error'); return;
+  }
+  var escaped = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const html = '<html><body style="font-family:Georgia,serif;font-size:12pt;line-height:1.6;max-width:600px;margin:40px auto;">' +
+    '<pre style="font-family:Georgia,serif;white-space:pre-wrap;word-wrap:break-word;">' + escaped + '</pre></body></html>';
+  const blob = new Blob([html], { type: 'application/msword' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'cover-letter.doc';
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+function clearAll() {
+  document.getElementById('resumeInput').value = '';
+  document.getElementById('jdInput').value = '';
+  document.getElementById('letterOutput').value = '';
+  document.getElementById('letterOutput').setAttribute('readonly', true);
+  document.getElementById('letterOutput').style.cursor = 'default';
+  showToast('Cleared all fields.', 'success');
+}
+
+function showToast(msg, type) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'toast show ' + (type || '');
+  clearTimeout(el._timeout);
+  el._timeout = setTimeout(function() { el.classList.remove('show'); }, 3000);
+}
+
+function debounce(fn, ms) {
+  var id;
+  return function() {
+    var args = arguments;
+    var ctx = this;
+    clearTimeout(id);
+    id = setTimeout(function() { fn.apply(ctx, args); }, ms);
+  };
+}
+
+function escapeHtml(str) {
+  var div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+var script = document.createElement('script');
+script.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
+script.onload = initSupabase;
+document.head.appendChild(script);
+</script>
+</body>
+</html>
