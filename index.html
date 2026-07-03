@@ -369,13 +369,13 @@ textarea.letter-output{min-height:350px;font-family:var(--font-display);font-siz
 <script>
 const SUPABASE_URL='https://qsbasmcjpjvgpuyhfyia.supabase.co';
 const SUPABASE_ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFzYmFzbWNqcGp2Z3B1eWhmeWlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMwNTIxMTUsImV4cCI6MjA5ODYyODExNX0.C941_wofmCz3l0ZgF7Rp93kzYRHlAePpmLBRZ6l31t4';
-let supabase=null,currentUser=null,authMode='signin';
+let db=null,currentUser=null,authMode='signin';
 
 function initSupabase(){
   if(!SUPABASE_URL||!SUPABASE_ANON_KEY){document.getElementById('configNotice').style.display='block';return}
-  supabase=supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);checkSession()
+  db=supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);checkSession()
 }
-async function checkSession(){try{const{data:{session}}=await supabase.auth.getSession();if(session){currentUser=session.user;updateAuthUI();loadProfile();loadHistory()}}catch(e){}}
+async function checkSession(){try{const{data:{session}}=await db.auth.getSession();if(session){currentUser=session.user;updateAuthUI();loadProfile();loadHistory()}}catch(e){}}
 function updateAuthUI(){
   var ue=document.getElementById('userEmail'),ab=document.getElementById('authBtn'),lb=document.getElementById('logoutBtn'),sb=document.getElementById('saveLetterBtn'),hs=document.getElementById('historySection');
   if(currentUser){ab.style.display='none';lb.style.display='inline-flex';ue.textContent=currentUser.email;ue.style.display='inline';if(sb)sb.style.display='inline-flex';if(hs)hs.style.display='block'}
@@ -406,7 +406,7 @@ async function handleAuth(){
   if(password.length<6){err.textContent='Password must be at least 6 characters.';err.style.display='block';return}
   var btn=document.getElementById('authSubmitBtn');btn.disabled=true;btn.innerHTML='<span class="spinner"></span> Processing...';
   try{
-    var result=authMode==='signin'?await supabase.auth.signInWithPassword({email,password}):await supabase.auth.signUp({email,password});
+    var result=authMode==='signin'?await db.auth.signInWithPassword({email,password}):await db.auth.signUp({email,password});
     if(result.error){err.textContent=result.error.message;err.style.display='block';btn.disabled=false;btn.textContent=authMode==='signin'?'Sign In':'Sign Up';return}
     if(authMode==='signup'&&result.data.user?.identities?.length===0){err.textContent='An account with this email already exists.';err.style.display='block';btn.disabled=false;btn.textContent='Sign Up';return}
     currentUser=result.data.user||result.data.session?.user;closeAuth();updateAuthUI();
@@ -414,13 +414,13 @@ async function handleAuth(){
   }catch(e){err.textContent='Something went wrong.';err.style.display='block'}
   btn.disabled=false;btn.textContent=authMode==='signin'?'Sign In':'Sign Up'
 }
-async function signOut(){await supabase.auth.signOut();currentUser=null;updateAuthUI();document.getElementById('historyList').innerHTML='';showToast('Signed out.','success')}
+async function signOut(){await db.auth.signOut();currentUser=null;updateAuthUI();document.getElementById('historyList').innerHTML='';showToast('Signed out.','success')}
 async function saveProfile(){
-  if(!currentUser||!supabase)return;
+  if(!currentUser||!db)return;
   try{
     var skillsArr=[];
     if(_resumeData&&_resumeData.skills)skillsArr=_resumeData.skills;
-    await supabase.from('profiles').upsert({
+    await db.from('profiles').upsert({
       id:currentUser.id,
       name:document.getElementById('userName').value.trim(),
       email:document.getElementById('userEmailInput').value.trim(),
@@ -432,9 +432,9 @@ async function saveProfile(){
   }catch(e){}
 }
 async function loadProfile(){
-  if(!currentUser||!supabase)return;
+  if(!currentUser||!db)return;
   try{
-    var{data,error}=await supabase.from('profiles').select('*').eq('id',currentUser.id).single();
+    var{data,error}=await db.from('profiles').select('*').eq('id',currentUser.id).single();
     if(error||!data)return;
     document.getElementById('userName').value=data.name||'';
     document.getElementById('userEmailInput').value=data.email||'';
@@ -592,23 +592,23 @@ function generateCoverLetter(){
   showToast('Cover letter generated!','success')
 }
 async function saveLetter(){
-  if(!currentUser||!supabase){showToast('Sign in to save.','error');return}
+  if(!currentUser||!db){showToast('Sign in to save.','error');return}
   var l=document.getElementById('letterOutput').value.trim(),jd=document.getElementById('jdInput').value.trim();
   if(!l||l===document.getElementById('letterOutput').placeholder){showToast('Generate first.','error');return}
   var info=extractJobInfo(jd);
-  try{var{error}=await supabase.from('cover_letters').insert({user_id:currentUser.id,job_description:jd,job_title:info.title,company:info.company,cover_letter:l});if(error)throw error;showToast('Saved!','success');loadHistory()}catch(e){showToast('Error: '+e.message,'error')}
+  try{var{error}=await db.from('cover_letters').insert({user_id:currentUser.id,job_description:jd,job_title:info.title,company:info.company,cover_letter:l});if(error)throw error;showToast('Saved!','success');loadHistory()}catch(e){showToast('Error: '+e.message,'error')}
 }
 async function loadHistory(){
-  if(!currentUser||!supabase)return;
-  try{var{data,error}=await supabase.from('cover_letters').select('*').eq('user_id',currentUser.id).order('created_at',{ascending:false}).limit(20);if(error)throw error;var el=document.getElementById('historyList');if(!data||data.length===0){el.innerHTML='<div class="empty-state"><div class="icon">??</div><p>No saved cover letters yet.</p></div>';return};el.innerHTML=data.map(function(cl){return'<div class="history-item" onclick="loadHistoryLetter(\''+cl.id+'\')"><div><div class="title">'+escapeHtml(cl.job_title||'Untitled')+' at '+escapeHtml(cl.company||'Unknown')+'</div><div class="meta">'+new Date(cl.created_at).toLocaleDateString()+'</div></div><button class="del-btn" onclick="event.stopPropagation();deleteLetter(\''+cl.id+'\')">?</button></div>'}).join('')}catch(e){}
+  if(!currentUser||!db)return;
+  try{var{data,error}=await db.from('cover_letters').select('*').eq('user_id',currentUser.id).order('created_at',{ascending:false}).limit(20);if(error)throw error;var el=document.getElementById('historyList');if(!data||data.length===0){el.innerHTML='<div class="empty-state"><div class="icon">??</div><p>No saved cover letters yet.</p></div>';return};el.innerHTML=data.map(function(cl){return'<div class="history-item" onclick="loadHistoryLetter(\''+cl.id+'\')"><div><div class="title">'+escapeHtml(cl.job_title||'Untitled')+' at '+escapeHtml(cl.company||'Unknown')+'</div><div class="meta">'+new Date(cl.created_at).toLocaleDateString()+'</div></div><button class="del-btn" onclick="event.stopPropagation();deleteLetter(\''+cl.id+'\')">?</button></div>'}).join('')}catch(e){}
 }
 async function loadHistoryLetter(id){
-  if(!supabase)return;
-  try{var{data,error}=await supabase.from('cover_letters').select('*').eq('id',id).single();if(error||!data)throw error;document.getElementById('jdInput').value=data.job_description||'';document.getElementById('letterOutput').value=data.cover_letter||'';document.getElementById('letterOutput').style.cursor='text';document.getElementById('letterOutput').removeAttribute('readonly');showToast('Loaded.','success')}catch(e){showToast('Error loading.','error')}
+  if(!db)return;
+  try{var{data,error}=await db.from('cover_letters').select('*').eq('id',id).single();if(error||!data)throw error;document.getElementById('jdInput').value=data.job_description||'';document.getElementById('letterOutput').value=data.cover_letter||'';document.getElementById('letterOutput').style.cursor='text';document.getElementById('letterOutput').removeAttribute('readonly');showToast('Loaded.','success')}catch(e){showToast('Error loading.','error')}
 }
 async function deleteLetter(id){
-  if(!supabase||!confirm('Delete?'))return;
-  try{await supabase.from('cover_letters').delete().eq('id',id);showToast('Deleted.','success');loadHistory()}catch(e){showToast('Error.','error')}
+  if(!db||!confirm('Delete?'))return;
+  try{await db.from('cover_letters').delete().eq('id',id);showToast('Deleted.','success');loadHistory()}catch(e){showToast('Error.','error')}
 }
 function downloadTxt(eid,fn){
   var t=document.getElementById(eid).value;
@@ -970,8 +970,8 @@ function fixResume(){
   document.getElementById('fixedResumeOutput').innerHTML=h;
   showToast('Resume fixed! Matched '+matchedSkills.length+' skills.','success')
   // Save skills to database
-  if(currentUser&&supabase){
-    try{supabase.from('profiles').upsert({id:currentUser.id,skills:sortedSkills,updated_at:new Date().toISOString()},{onConflict:'id'})}catch(e){}
+  if(currentUser&&db){
+    try{db.from('profiles').upsert({id:currentUser.id,skills:sortedSkills,updated_at:new Date().toISOString()},{onConflict:'id'})}catch(e){}
   }
 }
 
