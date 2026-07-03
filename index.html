@@ -306,6 +306,46 @@ textarea.letter-output {
   color: #fbbf24;
   display: none;
 }
+
+/* Upload zone */
+.upload-zone {
+  border: 2px dashed var(--border);
+  border-radius: var(--radius-sm);
+  padding: 24px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-bottom: 10px;
+  position: relative;
+}
+.upload-zone:hover, .upload-zone.dragover {
+  border-color: var(--accent);
+  background: rgba(59, 130, 246, 0.05);
+}
+.upload-zone .icon { font-size: 2rem; margin-bottom: 8px; }
+.upload-zone .text { font-size: 0.85rem; color: var(--text-dim); }
+.upload-zone .hint { font-size: 0.75rem; color: var(--text-dim); margin-top: 4px; opacity: 0.6; }
+.upload-zone input[type="file"] {
+  position: absolute; inset: 0; opacity: 0; cursor: pointer;
+}
+.upload-status {
+  display: none;
+  font-size: 0.8rem;
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+  margin-bottom: 10px;
+  align-items: center;
+  gap: 8px;
+}
+.upload-status.show { display: flex; }
+.upload-status.success { background: rgba(16, 185, 129, 0.1); color: var(--green); border: 1px solid rgba(16, 185, 129, 0.3); }
+.upload-status.error { background: rgba(239, 68, 68, 0.1); color: var(--red); border: 1px solid rgba(239, 68, 68, 0.3); }
+.upload-status.loading { background: rgba(59, 130, 246, 0.1); color: var(--accent); border: 1px solid rgba(59, 130, 246, 0.3); }
+.upload-status .spinner-sm {
+  display: inline-block; width: 12px; height: 12px;
+  border: 2px solid rgba(255,255,255,0.3); border-top-color: currentColor;
+  border-radius: 50%; animation: spin 0.6s linear infinite;
+}
 </style>
 </head>
 <body>
@@ -341,8 +381,15 @@ textarea.letter-output {
         </div>
       </div>
       <div class="form-group">
-        <label>Paste Your Resume</label>
-        <textarea class="resume-input" id="resumeInput" placeholder="Paste your full resume here..."></textarea>
+        <label>Upload or Paste Your Resume</label>
+        <div class="upload-zone" id="uploadZone">
+          <div class="icon">?</div>
+          <div class="text">Click to upload or drag &amp; drop</div>
+          <div class="hint">Supports .txt, .pdf, .docx</div>
+          <input type="file" id="fileInput" accept=".txt,.pdf,.docx">
+        </div>
+        <div class="upload-status" id="uploadStatus"></div>
+        <textarea class="resume-input" id="resumeInput" placeholder="Or paste your resume here..."></textarea>
       </div>
       <div class="form-group">
         <label>Paste Job Description</label>
@@ -656,7 +703,7 @@ function extractResumeSkills(text) {
   const skills = extractSkills(text);
   const skillsSection = text.match(/skills?\s*:?([\s\S]*?)(?:\n\n|\n[A-Z]|\n-{3}|$)/i);
   if (skillsSection) {
-    const parts = skillsSection[1].split(/[,�\n|/]/);
+    const parts = skillsSection[1].split(/[,�\n|/]/);
     for (const p of parts) {
       const clean = p.trim();
       if (clean.length > 1 && clean.length < 50) skills.push(clean);
@@ -670,7 +717,7 @@ function extractExperience(text) {
   const lines = text.split('\n').filter(l => l.trim());
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i].trim();
-    const m = line.match(/^(.+?)\s+(?:at|@|�|-)\s+(.+?)(?:\s*[(\[]|$)/);
+    const m = line.match(/^(.+?)\s+(?:at|@|�|-)\s+(.+?)(?:\s*[(\[]|$)/);
     if (m) {
       const role = m[1].trim();
       const org = m[2].trim();
@@ -842,8 +889,132 @@ function clearAll() {
   document.getElementById('letterOutput').value = '';
   document.getElementById('letterOutput').setAttribute('readonly', true);
   document.getElementById('letterOutput').style.cursor = 'default';
+  hideUploadStatus();
   showToast('Cleared all fields.', 'success');
 }
+
+// ─── FILE UPLOAD ────────────────────────────────────────────
+const uploadZone = document.getElementById('uploadZone');
+const fileInput = document.getElementById('fileInput');
+const uploadStatus = document.getElementById('uploadStatus');
+
+function setUploadStatus(msg, type) {
+  uploadStatus.textContent = msg;
+  uploadStatus.className = 'upload-status show ' + (type || '');
+}
+
+function hideUploadStatus() {
+  uploadStatus.className = 'upload-status';
+}
+
+function readFileAsText(file) {
+  return new Promise(function(resolve, reject) {
+    var reader = new FileReader();
+    reader.onload = function(e) { resolve(e.target.result); };
+    reader.onerror = function() { reject(new Error('Failed to read file')); };
+    reader.readAsText(file);
+  });
+}
+
+function readFileAsArrayBuffer(file) {
+  return new Promise(function(resolve, reject) {
+    var reader = new FileReader();
+    reader.onload = function(e) { resolve(e.target.result); };
+    reader.onerror = function() { reject(new Error('Failed to read file')); };
+    reader.readAsArrayBuffer(file);
+  });
+}
+
+function handleFile(file) {
+  if (!file) return;
+  var ext = file.name.split('.').pop().toLowerCase();
+
+  if (ext === 'txt') {
+    setUploadStatus('Reading ' + file.name + '...', 'loading');
+    readFileAsText(file).then(function(text) {
+      document.getElementById('resumeInput').value = text;
+      setUploadStatus('Loaded ' + file.name, 'success');
+      setTimeout(hideUploadStatus, 3000);
+    }).catch(function() {
+      setUploadStatus('Failed to read ' + file.name, 'error');
+    });
+  } else if (ext === 'pdf') {
+    setUploadStatus('Extracting text from PDF...', 'loading');
+    readFileAsArrayBuffer(file).then(function(buffer) {
+      if (typeof pdfjsLib === 'undefined') {
+        setUploadStatus('PDF library not loaded yet. Try again.', 'error');
+        return;
+      }
+      return pdfjsLib.getDocument({ data: buffer }).promise;
+    }).then(function(pdf) {
+      var fullText = '';
+      var pagePromises = [];
+      for (var i = 1; i <= pdf.numPages; i++) {
+        pagePromises.push(pdf.getPage(i).then(function(page) {
+          return page.getTextContent().then(function(content) {
+            return content.items.map(function(item) { return item.str; }).join(' ');
+          });
+        }));
+      }
+      return Promise.all(pagePromises).then(function(pages) {
+        return pages.join('\n\n');
+      });
+    }).then(function(text) {
+      document.getElementById('resumeInput').value = text;
+      setUploadStatus('Loaded ' + file.name + ' (' + text.split(' ').length + ' words)', 'success');
+      setTimeout(hideUploadStatus, 3000);
+    }).catch(function() {
+      setUploadStatus('Failed to read PDF. Try copying the text manually.', 'error');
+    });
+  } else if (ext === 'docx') {
+    setUploadStatus('Extracting text from DOCX...', 'loading');
+    readFileAsArrayBuffer(file).then(function(buffer) {
+      if (typeof mammoth === 'undefined') {
+        setUploadStatus('DOCX library not loaded yet. Try again.', 'error');
+        return;
+      }
+      return mammoth.extractRawText({ arrayBuffer: buffer });
+    }).then(function(result) {
+      document.getElementById('resumeInput').value = result.value;
+      setUploadStatus('Loaded ' + file.name, 'success');
+      setTimeout(hideUploadStatus, 3000);
+    }).catch(function() {
+      setUploadStatus('Failed to read DOCX. Try saving as .txt or .pdf.', 'error');
+    });
+  } else {
+    setUploadStatus('Unsupported file type: .' + ext, 'error');
+  }
+}
+
+// File input change
+fileInput.addEventListener('change', function(e) {
+  if (e.target.files && e.target.files[0]) {
+    handleFile(e.target.files[0]);
+  }
+  // Reset so the same file can be re-uploaded
+  fileInput.value = '';
+});
+
+// Drag & drop
+uploadZone.addEventListener('dragover', function(e) {
+  e.preventDefault();
+  uploadZone.classList.add('dragover');
+});
+uploadZone.addEventListener('dragleave', function() {
+  uploadZone.classList.remove('dragover');
+});
+uploadZone.addEventListener('drop', function(e) {
+  e.preventDefault();
+  uploadZone.classList.remove('dragover');
+  if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+    handleFile(e.dataTransfer.files[0]);
+  }
+});
+
+// Click on zone triggers file input
+uploadZone.addEventListener('click', function() {
+  fileInput.click();
+});
 
 function showToast(msg, type) {
   const el = document.getElementById('toast');
@@ -869,10 +1040,17 @@ function escapeHtml(str) {
   return div.innerHTML;
 }
 
-var script = document.createElement('script');
-script.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
-script.onload = initSupabase;
-document.head.appendChild(script);
+// Load CDN libraries
+function loadScript(src, cb) {
+  var s = document.createElement('script');
+  s.src = src;
+  s.onload = cb;
+  document.head.appendChild(s);
+}
+
+loadScript('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2', initSupabase);
+loadScript('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js');
+loadScript('https://cdn.jsdelivr.net/npm/mammoth@1.6.0/mammoth.browser.min.js');
 </script>
 </body>
 </html>
