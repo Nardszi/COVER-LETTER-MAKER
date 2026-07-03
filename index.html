@@ -52,7 +52,19 @@ input:focus,textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(-
 textarea{resize:vertical;min-height:120px;line-height:1.5}
 textarea.resume-input{min-height:180px}
 textarea.jd-input{min-height:180px}
-textarea.letter-output{min-height:350px;font-family:var(--font-display);font-size:.95rem;line-height:1.8}
+.letter-output{min-height:350px;font-family:var(--font-display);font-size:.95rem;line-height:1.8;background:var(--card);border:1px solid var(--border);border-radius:var(--radius-sm);padding:24px;color:var(--text);white-space:pre-wrap;overflow-y:auto;max-height:500px}
+.letter-output.dark-preview{background:#1a1a2e;color:#e0e0e0;border-color:#333}
+.letter-output .cl-header{font-size:1.1rem;font-weight:700;margin-bottom:4px}
+.letter-output .cl-contact{font-size:.85rem;color:var(--text-dim);margin-bottom:4px}
+.letter-output .cl-sep{border:none;border-top:1px solid var(--border);margin:8px 0 16px}
+.letter-output .cl-date{font-size:.85rem;color:var(--text-dim);margin-bottom:16px}
+.letter-output .cl-salutation{margin-bottom:12px}
+.letter-output .cl-body p{margin-bottom:12px}
+.letter-output .cl-closing{margin-top:20px}
+.letter-output .cl-name{font-weight:600}
+.letter-output .cl-highlight{background:rgba(59,130,246,.15);color:var(--accent);padding:1px 4px;border-radius:2px}
+.letter-output.template-modern{font-family:var(--font);border-left:3px solid var(--accent);padding-left:20px}
+.letter-output.template-minimal{font-family:'Courier New',monospace;font-size:.88rem;border:none;padding:0;background:transparent}
 .gen-area{display:flex;gap:14px;flex-wrap:wrap;margin-top:6px}
 .gen-area .btn{flex:1;min-width:150px;padding:13px 22px;font-size:.95rem}
 .output-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
@@ -219,6 +231,7 @@ textarea.letter-output{min-height:350px;font-family:var(--font-display);font-siz
 <nav class="nav">
   <h1><span>ProResumé</span></h1>
   <div class="nav-actions">
+    <button class="btn btn-secondary btn-sm" id="darkModeBtn" onclick="toggleDarkMode()" title="Toggle dark/light mode">☀</button>
     <span class="user-email" id="userEmail"></span>
     <button class="btn btn-primary btn-sm auth-btn" id="authBtn" onclick="openAuth()">Sign In</button>
     <button class="btn btn-secondary btn-sm" id="logoutBtn" style="display:none" onclick="signOut()">Sign Out</button>
@@ -266,13 +279,34 @@ textarea.letter-output{min-height:350px;font-family:var(--font-display);font-siz
         </div>
       </div>
       <div class="card">
-        <h2>Cover Letter <span class="badge">Editable</span></h2>
-        <textarea class="letter-output" id="letterOutput" placeholder="Your cover letter will appear here..." readonly style="cursor:default;"></textarea>
-        <div class="output-actions">
-          <button class="btn btn-secondary btn-sm" onclick="downloadTxt('letterOutput','cover-letter.txt')">?? .txt</button>
-          <button class="btn btn-secondary btn-sm" onclick="downloadDoc('letterOutput','cover-letter.doc')">?? .doc</button>
-          <button class="btn btn-green btn-sm" id="saveLetterBtn" onclick="saveLetter()" style="display:none">?? Save</button>
+        <h2>Cover Letter <span class="badge">Editable</span>
+          <span class="ats-score" id="clAtsScore" style="display:none"></span>
+        </h2>
+        <div class="preview-toolbar" id="clPreviewToolbar" style="display:none">
+          <select class="template-select" id="clTemplateSelect" onchange="changeClTemplate()">
+            <option value="harvard">Harvard</option>
+            <option value="modern">Modern</option>
+            <option value="minimal">Minimal</option>
+          </select>
+          <button class="btn btn-secondary btn-sm" onclick="toggleClPreviewDark()">Dark Preview</button>
+          <div class="undo-redo">
+            <button class="btn btn-secondary btn-sm" onclick="undoCl()" id="clUndoBtn" disabled>Undo</button>
+            <button class="btn btn-secondary btn-sm" onclick="redoCl()" id="clRedoBtn" disabled>Redo</button>
+          </div>
         </div>
+        <div class="letter-output" id="letterOutput">
+          <div class="empty-state" style="padding:60px 20px;">
+            <div class="icon">✉</div>
+            <p>Your cover letter will appear here after you click <strong>Generate Cover Letter</strong>.</p>
+          </div>
+        </div>
+        <div class="output-actions">
+          <button class="btn btn-secondary btn-sm" onclick="downloadClTxt()">↓ .txt</button>
+          <button class="btn btn-secondary btn-sm" onclick="downloadClDoc()">↓ .doc</button>
+          <button class="btn btn-secondary btn-sm" onclick="downloadClPdf()">↓ .pdf</button>
+          <button class="btn btn-green btn-sm" id="saveLetterBtn" onclick="saveLetter()" style="display:none">💾 Save</button>
+        </div>
+      </div>
       </div>
     </div>
     <div class="card" id="historySection" style="margin-top:24px;display:none;">
@@ -715,15 +749,16 @@ function extractResumeSkills(t){
   if(sec){sec[1].split(/[,�\n|/]/).forEach(function(p){var c=p.trim();if(c.length>1&&c.length<50)found.push(c.charAt(0).toUpperCase()+c.slice(1))})}
   var s=new Set(),u=[];for(var i=0;i<found.length;i++){var lc=found[i].toLowerCase();if(!s.has(lc)){s.add(lc);u.push(found[i])}}return u
 }
+var _clData=null,_clUndoStack=[],_clRedoStack=[];
 function generateCoverLetter(){
   var jd=document.getElementById('jdInput').value.trim(),resume=document.getElementById('resumeInput').value.trim();
-  var name=document.getElementById('userName').value.trim()||'Applicant',email=document.getElementById('userEmailInput').value.trim(),phone=document.getElementById('userPhone').value.trim();
+  var name=document.getElementById('userName').value.trim()||'Applicant',email=document.getElementById('userEmailInput').value.trim(),phone=document.getElementById('userPhone').value.trim(),link=document.getElementById('userLink').value.trim();
   if(!jd){showToast('Paste a job description first.','error');return}
   var info=extractJobInfo(jd),jdSkills=extractSkills(jd),resumeSkills=extractResumeSkills(resume),exp=[];
   if(resume){
     var rl=resume.split('\n').filter(function(l){return l.trim()});
     for(var i=0;i<rl.length;i++){
-      var m=rl[i].match(/^(.+?)\s+(?:at|@|�|-)\s+(.+?)(?:\s*[(\[]|$)/);
+      var m=rl[i].match(/^(.+?)\s+(?:at|@|\u2013|-)\s+(.+?)(?:\s*[(\[]|$)/);
       if(m){
         var ach=[];
         for(var j=i+1;j<Math.min(i+4,rl.length);j++){var n=rl[j].trim();if(/^[\s\-*\d.]/.test(n)&&n.replace(/^[\s\-*\d.]+\s*/,'').length>10)ach.push(n.replace(/^[\s\-*\d.]+\s*/,''));else if(/^[A-Z]/.test(n)&&n.includes(' at '))break}
@@ -732,23 +767,73 @@ function generateCoverLetter(){
     }
   }
   var matched=jdSkills.filter(function(s){return resumeSkills.some(function(rs){return rs.toLowerCase().includes(s.toLowerCase())||s.toLowerCase().includes(rs.toLowerCase())})});
-  var l='',ct=[name];if(email)ct.push(email);if(phone)ct.push(phone);
-  l+=ct.join('  |  ')+'\n'+'\u2014'.repeat(30)+'\n\n';
-  var d=new Date();l+=d.toLocaleString('en-US',{month:'long'})+' '+d.getDate()+', '+d.getFullYear()+'\n\n';
-  l+='Dear Hiring Manager,\n\nI am writing to express my strong interest in the '+info.title+' position at '+info.company+'. ';
-  if(resume){
-    if(exp.length>0){l+='In my role as '+exp[0].role+' at '+exp[0].org+', I developed expertise that directly aligns with this opportunity. ';if(exp[0].achievements.length>0)l+='For example, '+exp[0].achievements[0].charAt(0).toLowerCase()+exp[0].achievements[0].slice(1)+'. '}
-    if(matched.length>0)l+='\n\nMy experience with '+matched.slice(0,4).join(', ')+' matches your requirements. ';
-    l+="I am eager to bring this skillset to "+info.company+" and contribute to your team's success."
-  }else{l+='I am confident that my background and enthusiasm make me a strong candidate for this role.\n\nI would welcome the opportunity to discuss how my experience aligns with the needs of your team.'}
-  l+='\n\nThank you for considering my application. I look forward to the opportunity to speak with you about how I can contribute to '+info.company+'.\n\nBest regards,\n'+name;
-  var out=document.getElementById('letterOutput');out.value=l;out.style.cursor='text';out.removeAttribute('readonly');
-  showToast('Cover letter generated!','success')
+  var d=new Date(),dateStr=d.toLocaleString('en-US',{month:'long'})+' '+d.getDate()+', '+d.getFullYear();
+  var paras=[];
+  paras.push('Dear Hiring Manager,');
+  var p1='I am writing to express my strong interest in the '+info.title+' position at '+info.company+'. ';
+  if(resume&&exp.length>0){p1+='In my role as '+exp[0].role+' at '+exp[0].org+', I developed expertise that directly aligns with this opportunity. ';if(exp[0].achievements.length>0)p1+='For example, '+exp[0].achievements[0].charAt(0).toLowerCase()+exp[0].achievements[0].slice(1)+'.'}
+  else{p1+='I am confident that my background and enthusiasm make me a strong candidate for this role.'}
+  paras.push(p1);
+  var p2='';
+  if(matched.length>0)p2='My experience with '+matched.slice(0,4).join(', ')+' matches your requirements. ';
+  p2+="I am eager to bring this skillset to "+info.company+" and contribute to your team's success.";
+  paras.push(p2);
+  paras.push('Thank you for considering my application. I look forward to the opportunity to speak with you about how I can contribute to '+info.company+'.');
+  _clData={name:name,email:email,phone:phone,link:link,date:dateStr,paragraphs:paras,company:info.company,title:info.title,matched:matched};
+  _clUndoStack=[];_clRedoStack=[];
+  renderClPreview();
+  document.getElementById('clPreviewToolbar').style.display='flex';
+  showToast('Cover letter generated!','success');
+}
+function renderClPreview(){
+  if(!_clData)return;
+  var d=_clData,el=document.getElementById('letterOutput'),tpl=document.getElementById('clTemplateSelect').value;
+  el.className='letter-output'+(tpl==='modern'?' template-modern':'')+(tpl==='minimal'?' template-minimal':'');
+  var h='';
+  h+='<div class="cl-header">'+escH(d.name.toUpperCase())+'</div>';
+  var contactParts=[];if(d.email)contactParts.push(d.email);if(d.phone)contactParts.push(d.phone);if(d.link)contactParts.push(d.link);
+  if(contactParts.length>0)h+='<div class="cl-contact">'+escH(contactParts.join('  |  '))+'</div>';
+  h+='<hr class="cl-sep">';
+  h+='<div class="cl-date">'+escH(d.date)+'</div>';
+  h+='<div class="cl-salutation">'+escH(d.paragraphs[0])+'</div>';
+  h+='<div class="cl-body">';
+  for(var i=1;i<d.paragraphs.length;i++){
+    var txt=escH(d.paragraphs[i]);
+    if(d.matched){for(var k=0;k<d.matched.length;k++){var kw=d.matched[k],re=new RegExp('\\b('+kw.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')\\b','gi');txt=txt.replace(re,'<span class="cl-highlight">$1</span>')}}
+    h+='<p>'+txt+'</p>';
+  }
+  h+='</div>';
+  h+='<div class="cl-closing">Best regards,<br><span class="cl-name">'+escH(d.name)+'</span></div>';
+  el.innerHTML=h;
+  updateClAtsScore();
+}
+function clGetText(){
+  if(!_clData)return'';
+  var d=_clData,t=d.name+'\n';
+  var cp=[];if(d.email)cp.push(d.email);if(d.phone)cp.push(d.phone);if(d.link)cp.push(d.link);
+  if(cp.length>0)t+=cp.join(' | ')+'\n';
+  t+='\n'+d.date+'\n\n';
+  for(var i=0;i<d.paragraphs.length;i++)t+=d.paragraphs[i]+'\n\n';
+  t+='Best regards,\n'+d.name;
+  return t;
+}
+function changeClTemplate(){if(_clData){pushClUndo();renderClPreview()}}
+function toggleClPreviewDark(){document.getElementById('letterOutput').classList.toggle('dark-preview')}
+function pushClUndo(){if(_clData){_clUndoStack.push(JSON.stringify(_clData));if(_clUndoStack.length>20)_clUndoStack.shift();_clRedoStack=[];updateClUndoRedoBtns()}}
+function undoCl(){if(_clUndoStack.length===0)return;_clRedoStack.push(JSON.stringify(_clData));_clData=JSON.parse(_clUndoStack.pop());renderClPreview();updateClUndoRedoBtns();showToast('Undone.','success')}
+function redoCl(){if(_clRedoStack.length===0)return;_clUndoStack.push(JSON.stringify(_clData));_clData=JSON.parse(_clRedoStack.pop());renderClPreview();updateClUndoRedoBtns();showToast('Redone.','success')}
+function updateClUndoRedoBtns(){document.getElementById('clUndoBtn').disabled=_clUndoStack.length===0;document.getElementById('clRedoBtn').disabled=_clRedoStack.length===0}
+function updateClAtsScore(){
+  if(!_clData||!_clData.matched){document.getElementById('clAtsScore').style.display='none';return}
+  var score=Math.min(100,50+_clData.matched.length*10);
+  var el=document.getElementById('clAtsScore');el.style.display='inline-flex';
+  el.textContent='ATS: '+score;
+  el.className='ats-score '+(score>=70?'high':score>=40?'medium':'low');
 }
 async function saveLetter(){
   if(!currentUser||!db){showToast('Sign in to save.','error');return}
-  var l=document.getElementById('letterOutput').value.trim(),jd=document.getElementById('jdInput').value.trim();
-  if(!l||l===document.getElementById('letterOutput').placeholder){showToast('Generate first.','error');return}
+  var l=clGetText(),jd=document.getElementById('jdInput').value.trim();
+  if(!l){showToast('Generate first.','error');return}
   var info=extractJobInfo(jd);
   try{var{error}=await db.from('cover_letters').insert({user_id:currentUser.id,job_description:jd,job_title:info.title,company:info.company,cover_letter:l});if(error)throw error;showToast('Saved!','success');loadHistory()}catch(e){showToast('Error: '+e.message,'error')}
 }
@@ -758,33 +843,76 @@ async function loadHistory(){
 }
 async function loadHistoryLetter(id){
   if(!db)return;
-  try{var{data,error}=await db.from('cover_letters').select('*').eq('id',id).single();if(error||!data)throw error;document.getElementById('jdInput').value=data.job_description||'';document.getElementById('letterOutput').value=data.cover_letter||'';document.getElementById('letterOutput').style.cursor='text';document.getElementById('letterOutput').removeAttribute('readonly');showToast('Loaded.','success')}catch(e){showToast('Error loading.','error')}
+  try{var{data,error}=await db.from('cover_letters').select('*').eq('id',id).single();if(error||!data)throw error;
+    document.getElementById('jdInput').value=data.job_description||'';
+    var txt=data.cover_letter||'';
+    var lines=txt.split('\n').filter(function(l){return l.trim()});
+    var name=lines[0]||'Applicant';
+    var contactLine=lines[1]||'';
+    var email='',phone='',link='';
+    var parts=contactLine.split('|').map(function(s){return s.trim()});
+    parts.forEach(function(p){if(p.includes('@'))email=p;else if(p.match(/\d{3}/))phone=p;else if(p.includes('.'))link=p;});
+    var dateIdx=lines.findIndex(function(l){return l.match(/\d{4}/)});
+    var date=lines[dateIdx]||new Date().toLocaleDateString();
+    var salIdx=lines.findIndex(function(l){return l.startsWith('Dear')});
+    var closeIdx=lines.findIndex(function(l){return l.startsWith('Best')});
+    var paras=[];
+    if(salIdx>=0)paras.push(lines[salIdx]);
+    if(salIdx>=0&&closeIdx>salIdx){for(var i=salIdx+1;i<closeIdx;i++)if(lines[i].trim())paras.push(lines[i])}
+    if(paras.length===0)paras.push('Dear Hiring Manager,',txt);
+    var info=extractJobInfo(data.job_description||'');
+    _clData={name:name,email:email,phone:phone,link:link,date:date,paragraphs:paras,company:info.company,title:info.title,matched:[]};
+    _clUndoStack=[];_clRedoStack=[];
+    renderClPreview();
+    document.getElementById('clPreviewToolbar').style.display='flex';
+    showToast('Loaded.','success');
+  }catch(e){showToast('Error loading.','error')}
 }
 async function deleteLetter(id){
   if(!db||!confirm('Delete?'))return;
   try{await db.from('cover_letters').delete().eq('id',id);showToast('Deleted.','success');loadHistory()}catch(e){showToast('Error.','error')}
 }
-function downloadTxt(eid,fn){
-  var t=document.getElementById(eid).value;
-  if(!t||t===document.getElementById(eid).placeholder){showToast('Nothing to download.','error');return}
-  var b=new Blob([t],{type:'text/plain'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=fn;a.click();URL.revokeObjectURL(a.href)
+function downloadClTxt(){
+  var t=clGetText();
+  if(!t){showToast('Nothing to download.','error');return}
+  var b=new Blob([t],{type:'text/plain'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='cover-letter.txt';a.click();URL.revokeObjectURL(a.href)
 }
-function downloadDoc(eid,fn){
-  var t=document.getElementById(eid).value;
-  if(!t||t===document.getElementById(eid).placeholder){showToast('Nothing to download.','error');return}
-  var lines=t.split('\n'),body='';
-  for(var i=0;i<lines.length;i++){
-    var l=lines[i];
-    if(l.trim()===''){body+='<p style="margin:0 0 6pt 0;font-size:12pt;line-height:1.5;">&nbsp;</p>';continue}
-    // Detect the separator line (———)
-    if(l.match(/^[—\-=]{5,}$/)){
-      body+='<p style="margin:2pt 0 2pt 0;font-size:1pt;line-height:1pt;border-top:1pt solid #666;">&nbsp;</p>';
-      continue
-    }
-    body+='<p style="margin:0 0 3pt 0;font-size:12pt;line-height:1.5;font-family:Georgia,\'Times New Roman\',serif;">'+escapeHtml(l)+'</p>'
+function downloadClDoc(){
+  if(!_clData){showToast('Nothing to download.','error');return}
+  var d=_clData,body='';
+  body+='<p style="margin:0 0 3pt 0;font-size:16pt;line-height:1.2;font-family:Georgia,\'Times New Roman\',serif;font-weight:bold;">'+escapeHtml(d.name)+'</p>';
+  var cp=[];if(d.email)cp.push(d.email);if(d.phone)cp.push(d.phone);if(d.link)cp.push(d.link);
+  if(cp.length>0)body+='<p style="margin:0 0 3pt 0;font-size:10pt;color:#555;font-family:Georgia,\'Times New Roman\',serif;">'+escapeHtml(cp.join('  |  '))+'</p>';
+  body+='<p style="margin:2pt 0 2pt 0;font-size:1pt;line-height:1pt;border-top:1pt solid #999;">&nbsp;</p>';
+  body+='<p style="margin:0 0 12pt 0;font-size:11pt;color:#555;font-family:Georgia,\'Times New Roman\',serif;">'+escapeHtml(d.date)+'</p>';
+  for(var i=0;i<d.paragraphs.length;i++){
+    body+='<p style="margin:0 0 10pt 0;font-size:12pt;line-height:1.5;font-family:Georgia,\'Times New Roman\',serif;">'+escapeHtml(d.paragraphs[i])+'</p>';
   }
+  body+='<p style="margin:16pt 0 0 0;font-size:12pt;line-height:1.5;font-family:Georgia,\'Times New Roman\',serif;">Best regards,<br><strong>'+escapeHtml(d.name)+'</strong></p>';
   var h='<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="UTF-8"><title>Cover Letter</title></head><body style="font-family:Georgia,\'Times New Roman\',serif;font-size:12pt;color:#000;margin:40px 72px;line-height:1.5;">'+body+'</body></html>';
-  var b=new Blob([h],{type:'application/msword'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=fn;a.click();URL.revokeObjectURL(a.href)
+  var b=new Blob([h],{type:'application/msword'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='cover-letter.doc';a.click();URL.revokeObjectURL(a.href)
+}
+function downloadClPdf(){
+  if(!_clData){showToast('Nothing to download.','error');return}
+  if(typeof jsPDF==='undefined'){showToast('PDF library loading, try again.','error');return}
+  var d=_clData,doc=new jsPDF({unit:'pt',format:'letter'});
+  var mx=72,my=60,w=612-2*mx,y=my;
+  doc.setFont('Georgia','normal');doc.setFontSize(16);doc.setFont('Georgia','bold');
+  doc.text(d.name,mx,y);y+=20;
+  doc.setFont('Georgia','normal');doc.setFontSize(10);doc.setTextColor(100);
+  var cp=[];if(d.email)cp.push(d.email);if(d.phone)cp.push(d.phone);if(d.link)cp.push(d.link);
+  if(cp.length>0){doc.text(cp.join('  |  '),mx,y);y+=16}
+  doc.setDrawColor(180);doc.line(mx,y,mx+w,y);y+=16;
+  doc.setTextColor(100);doc.setFontSize(10);doc.text(d.date,mx,y);y+=20;
+  doc.setTextColor(0);doc.setFontSize(12);
+  for(var i=0;i<d.paragraphs.length;i++){
+    var lines=doc.splitTextToSize(d.paragraphs[i],w);
+    doc.text(lines,mx,y);y+=lines.length*16+8;
+  }
+  y+=12;doc.setFontSize(12);doc.text('Best regards,',mx,y);y+=16;
+  doc.setFont('Georgia','bold');doc.text(d.name,mx,y);
+  doc.save('cover-letter.pdf');
+  showToast('PDF downloaded!','success');
 }
 function esc(t){return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
 function highlightKW(text,keywords){
@@ -1266,11 +1394,15 @@ function downloadResumeDoc(){
 }
 function clearAll(){
   document.getElementById('resumeInput').value='';document.getElementById('jdInput').value='';
-  document.getElementById('letterOutput').value='';document.getElementById('letterOutput').setAttribute('readonly',true);document.getElementById('letterOutput').style.cursor='default';
+  _clData=null;_clUndoStack=[];_clRedoStack=[];
+  document.getElementById('letterOutput').innerHTML='<div class="empty-state" style="padding:60px 20px;"><div class="icon">✉</div><p>Your cover letter will appear here after you click <strong>Generate Cover Letter</strong>.</p></div>';
+  document.getElementById('letterOutput').className='letter-output';
+  document.getElementById('clPreviewToolbar').style.display='none';
+  document.getElementById('clAtsScore').style.display='none';
   hideUploadStatus();
   _uploadedResume='';document.getElementById('jdInputRF').value='';
   hideUploadStatusRF();
-  var fr=document.getElementById('fixedResumeOutput');if(fr)fr.innerHTML='<div class="empty-state" style="padding:60px 20px;"><div class="icon">??</div><p>Upload your resume and paste a job description, then click <strong>Fix My Resume</strong>.</p></div>';
+  var fr=document.getElementById('fixedResumeOutput');if(fr)fr.innerHTML='<div class="empty-state" style="padding:60px 20px;"><div class="icon">📄</div><p>Upload your resume and paste a job description, then click <strong>Fix My Resume</strong>.</p></div>';
   showToast('Cleared all fields.','success')
 }
 function showToast(m,t){
@@ -1381,6 +1513,24 @@ function togglePreviewDark(){
   else{el.style.background='#fff';el.style.color='#222'}
 }
 
+// ─── DARK MODE TOGGLE ─────────────────────────────────────
+var _darkMode=true;
+function toggleDarkMode(){
+  _darkMode=!_darkMode;
+  var r=document.documentElement;
+  if(!_darkMode){
+    r.style.setProperty('--bg','#f3f4f6');r.style.setProperty('--surface','#ffffff');r.style.setProperty('--card','#f9fafb');
+    r.style.setProperty('--card-hover','#f3f4f6');r.style.setProperty('--border','#e5e7eb');r.style.setProperty('--border-light','#d1d5db');
+    r.style.setProperty('--text','#1f2937');r.style.setProperty('--text-dim','#6b7280');r.style.setProperty('--text-bright','#111827');
+    document.getElementById('darkModeBtn').textContent='☾';
+  }else{
+    r.style.setProperty('--bg','#0b0f1a');r.style.setProperty('--surface','#111827');r.style.setProperty('--card','#1f2937');
+    r.style.setProperty('--card-hover','#283548');r.style.setProperty('--border','#374151');r.style.setProperty('--border-light','#4b5563');
+    r.style.setProperty('--text','#e5e7eb');r.style.setProperty('--text-dim','#9ca3af');r.style.setProperty('--text-bright','#f9fafb');
+    document.getElementById('darkModeBtn').textContent='☀';
+  }
+}
+
 // ─── LINKEDIN COPY ────────────────────────────────────────
 function copyLinkedIn(){
   if(!_resumeData)return;
@@ -1404,33 +1554,39 @@ function copyLinkedIn(){
 // ─── PDF DOWNLOAD ─────────────────────────────────────────
 function downloadResumePdf(){
   if(!_resumeData){showToast('Fix your resume first.','error');return}
-  var d=_resumeData;
-  // Generate simple text-based PDF using Word HTML trick
-  var txt=d.name+'\n\n';
-  if(d.contact)txt+=d.contact.join(' | ')+'\n\n';
-  if(d.summary)txt+='PROFESSIONAL SUMMARY\n'+d.summary+'\n\n';
+  if(typeof jsPDF==='undefined'){showToast('PDF library loading, try again.','error');return}
+  var d=_resumeData,doc=new jsPDF({unit:'pt',format:'letter'});
+  var mx=72,my=60,w=612-2*mx,y=my;
+  doc.setFont('Georgia','bold');doc.setFontSize(22);
+  doc.text(d.name.toUpperCase(),mx,y);y+=24;
+  if(d.contact){doc.setFont('Georgia','normal');doc.setFontSize(10);doc.setTextColor(100);
+    doc.text(d.contact.join('  |  '),mx,y);y+=18}
+  doc.setDrawColor(180);doc.line(mx,y,mx+w,y);y+=18;
+  doc.setTextColor(0);
+  if(d.summary){doc.setFont('Georgia','bold');doc.setFontSize(12);doc.text('PROFESSIONAL SUMMARY',mx,y);y+=16;
+    doc.setFont('Georgia','normal');doc.setFontSize(11);
+    var sl=doc.splitTextToSize(d.summary,w);doc.text(sl,mx,y);y+=sl.length*14+12}
   if(d.categorizedSkills){
+    doc.setFont('Georgia','bold');doc.setFontSize(12);doc.text('TECHNICAL SKILLS',mx,y);y+=16;
+    doc.setFont('Georgia','normal');doc.setFontSize(11);
     var catNames=['Languages','Frameworks & Libraries','Databases','Developer Tools','Cloud & DevOps','Other'];
-    txt+='TECHNICAL SKILLS\n';
-    for(var c=0;c<catNames.length;c++){
-      var cs=d.categorizedSkills[catNames[c]];
-      if(cs&&cs.length>0)txt+=catNames[c]+': '+cs.join(', ')+'\n';
-    }
-    txt+='\n';
-  }
-  if(d.experience){txt+='EXPERIENCE\n';for(var i=0;i<d.experience.length;i++){
-    txt+=d.experience[i].role+' — '+d.experience[i].org+'\n';
-    if(d.experience[i].date)txt+=d.experience[i].date+'\n';
-    for(var j=0;j<d.experience[i].bullets.length;j++)txt+='• '+d.experience[i].bullets[j]+'\n';
-    txt+='\n';
-  }}
-  if(d.education){txt+='EDUCATION\n';for(var i=0;i<d.education.length;i++)txt+=d.education[i].text+'\n'}
-  // Create downloadable txt as fallback (actual PDF requires jsPDF library)
-  var b=new Blob([txt],{type:'text/plain'});
-  var a=document.createElement('a');a.href=URL.createObjectURL(b);
-  a.download='resume-'+(d.name||'resume').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')+'.txt';
-  a.click();URL.revokeObjectURL(a.href);
-  showToast('Downloaded as .txt (PDF requires jsPDF library)','success');
+    for(var c=0;c<catNames.length;c++){var cs=d.categorizedSkills[catNames[c]];
+      if(cs&&cs.length>0){var line=catNames[c]+': '+cs.join(', ');
+        var ll=doc.splitTextToSize(line,w);doc.text(ll,mx,y);y+=ll.length*14}}
+    y+=8}
+  if(d.experience){doc.setFont('Georgia','bold');doc.setFontSize(12);doc.text('EXPERIENCE',mx,y);y+=16;
+    for(var i=0;i<d.experience.length;i++){
+      doc.setFont('Georgia','bold');doc.setFontSize(11);doc.text(d.experience[i].role+' — '+d.experience[i].org,mx,y);y+=14;
+      if(d.experience[i].date){doc.setFont('Georgia','normal');doc.setFontSize(10);doc.setTextColor(100);doc.text(d.experience[i].date,mx,y);y+=12;doc.setTextColor(0)}
+      doc.setFont('Georgia','normal');doc.setFontSize(11);
+      for(var j=0;j<d.experience[i].bullets.length;j++){
+        var bl=doc.splitTextToSize('\u2022 '+d.experience[i].bullets[j],w-12);doc.text(bl,mx+12,y);y+=bl.length*14}
+      y+=6}}
+  if(d.education){doc.setFont('Georgia','bold');doc.setFontSize(12);doc.text('EDUCATION',mx,y);y+=16;
+    doc.setFont('Georgia','normal');doc.setFontSize(11);
+    for(var i=0;i<d.education.length;i++){doc.text(d.education[i].text,mx,y);y+=14}}
+  doc.save('resume-'+(d.name||'resume').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')+'.pdf');
+  showToast('PDF downloaded!','success');
 }
 
 // ─── COVER LETTER HISTORY SEARCH ──────────────────────────
@@ -1528,6 +1684,7 @@ generateCoverLetter=function(){
 loadScript('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2',initSupabase);
 loadScript('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js');
 loadScript('https://cdn.jsdelivr.net/npm/mammoth@1.6.0/mammoth.browser.min.js');
+loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
 </script>
 </body>
 </html>
