@@ -79,15 +79,15 @@ textarea.letter-output{min-height:350px;font-family:Georgia,'Times New Roman',se
 .history-item .meta{font-size:.8rem;color:var(--text-dim)}
 .history-item .del-btn{background:none;border:none;color:var(--red);cursor:pointer;font-size:1rem;padding:4px;opacity:.5}
 .history-item .del-btn:hover{opacity:1}
-.fixed-resume-output{background:#fff;color:#1a1a1a;font-family:Arial,Helvetica,sans-serif;font-size:10.5pt;line-height:1.4;padding:32px 28px;border-radius:var(--radius-sm);min-height:500px;overflow-y:auto;max-height:700px}
-.fixed-resume-output .resume-name{font-size:18pt;font-weight:700;text-align:center;margin-bottom:2px;color:#000}
-.fixed-resume-output .resume-contact{text-align:center;font-size:9.5pt;color:#555;margin-bottom:10px}
-.fixed-resume-output .resume-section-title{font-size:10.5pt;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;border-bottom:1.5px solid #333;padding-bottom:2px;margin-top:14px;margin-bottom:6px;color:#000}
-.fixed-resume-output .resume-item-title{font-weight:700;font-size:10.5pt;color:#000;margin:6px 0 0 0}
-.fixed-resume-output .resume-item-meta{font-style:italic;font-size:10pt;color:#666}
-.fixed-resume-output .resume-item{margin-bottom:6px}
-.fixed-resume-output .resume-bullet{margin-left:16px;font-size:10pt;line-height:1.35;text-indent:-8pt;padding-left:8pt}
-.fixed-resume-output .resume-summary{font-size:10pt;line-height:1.4;margin-bottom:4px}
+.fixed-resume-output{background:#fff;color:#1a1a1a;font-family:Calibri,Arial,Helvetica,sans-serif;font-size:10.5pt;line-height:1.5;padding:32px 28px;border-radius:var(--radius-sm);min-height:500px;overflow-y:auto;max-height:700px}
+.fixed-resume-output .resume-name{font-size:20pt;font-weight:700;text-align:center;margin-bottom:4px;color:#000}
+.fixed-resume-output .resume-contact{text-align:center;font-size:10pt;color:#555;margin-bottom:14px}
+.fixed-resume-output .resume-section-title{font-size:11.5pt;font-weight:700;text-transform:uppercase;letter-spacing:0.3px;border-bottom:1.5px solid #000;padding-bottom:3px;margin-top:16px;margin-bottom:6px;color:#000}
+.fixed-resume-output .resume-item-title{font-weight:700;font-size:10.5pt;color:#000;margin:8px 0 0 0}
+.fixed-resume-output .resume-item-meta{font-size:10pt;color:#333}
+.fixed-resume-output .resume-item{margin-bottom:8px}
+.fixed-resume-output .resume-bullet{margin-left:18px;font-size:10pt;line-height:1.45;text-indent:-9pt;padding-left:9pt}
+.fixed-resume-output .resume-summary{font-size:10.5pt;line-height:1.5;margin-bottom:4px}
 .fixed-resume-output .resume-skill-matched{background:#dbeafe;color:#1e40af;font-weight:600;padding:1px 4px;border-radius:2px}
 .fixed-resume-output .resume-skills-line{font-size:10pt;line-height:1.6}
 .config-notice{background:rgba(251,191,36,.1);border:1px solid rgba(251,191,36,.3);border-radius:var(--radius-sm);padding:16px;margin-bottom:20px;font-size:.85rem;color:#fbbf24;display:none}
@@ -641,19 +641,19 @@ function downloadResumeDoc(){
   var d=_resumeData;
   function e(t){return (t||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
 
-  // Word-compatible styles
+  // Word-compatible styles — matching NARD_RESUME format exactly
   var S={
-    name:'font-family:Arial,sans-serif;font-size:16pt;font-weight:700;text-align:center;color:#000;margin:0 0 3pt 0;letter-spacing:0.5pt;',
-    contact:'font-family:Arial,sans-serif;font-size:9.5pt;text-align:center;color:#444;margin:0 0 10pt 0;line-height:1.3;',
-    sectionHeader:'font-family:Arial,sans-serif;font-size:11pt;font-weight:700;text-transform:uppercase;letter-spacing:0.5pt;color:#000;margin:12pt 0 3pt 0;padding-bottom:2pt;border-bottom:1.5pt solid #222;',
-    summary:'font-family:Arial,sans-serif;font-size:10pt;color:#111;line-height:1.45;margin:2pt 0 0 0;',
-    expTitle:'font-family:Arial,sans-serif;font-size:10pt;font-weight:700;color:#000;margin:8pt 0 1pt 0;',
-    expDate:'font-family:Arial,sans-serif;font-size:9pt;color:#555;font-style:italic;margin:0 0 1pt 0;',
-    bullet:'font-family:Arial,sans-serif;font-size:10pt;color:#000;line-height:1.4;margin:0 0 1pt 0;',
-    skillLine:'font-family:Arial,sans-serif;font-size:10pt;color:#000;line-height:1.5;margin:2pt 0 0 0;',
-    eduDegree:'font-family:Arial,sans-serif;font-size:10pt;font-weight:700;color:#000;margin:5pt 0 1pt 0;',
-    eduDetail:'font-family:Arial,sans-serif;font-size:10pt;color:#222;margin:0 0 2pt 0;line-height:1.4;',
-    otherLine:'font-family:Arial,sans-serif;font-size:10pt;color:#000;margin:2pt 0 0 0;line-height:1.4;'
+    name:'font-family:Calibri,Arial,sans-serif;font-size:20pt;font-weight:700;text-align:center;color:#000;margin:0 0 4pt 0;',
+    contact:'font-family:Calibri,Arial,sans-serif;font-size:10pt;text-align:center;color:#555;margin:0 0 12pt 0;line-height:1.3;',
+    sectionHeader:'font-family:Calibri,Arial,sans-serif;font-size:11.5pt;font-weight:700;text-transform:uppercase;letter-spacing:0.3pt;color:#000;margin:14pt 0 0 0;padding-bottom:3pt;border-bottom:1pt solid #000;',
+    summary:'font-family:Calibri,Arial,sans-serif;font-size:10.5pt;color:#222;line-height:1.5;margin:4pt 0 0 0;',
+    expTitle:'font-family:Calibri,Arial,sans-serif;font-size:10.5pt;font-weight:700;color:#000;margin:8pt 0 1pt 0;',
+    expDate:'font-family:Calibri,Arial,sans-serif;font-size:10pt;color:#333;margin:0 0 1pt 0;',
+    bullet:'font-family:Calibri,Arial,sans-serif;font-size:10pt;color:#000;line-height:1.45;margin:0 0 1pt 0;',
+    skillLine:'font-family:Calibri,Arial,sans-serif;font-size:10pt;color:#000;line-height:1.6;margin:4pt 0 0 0;',
+    eduDegree:'font-family:Calibri,Arial,sans-serif;font-size:10.5pt;font-weight:700;color:#000;margin:6pt 0 1pt 0;',
+    eduDetail:'font-family:Calibri,Arial,sans-serif;font-size:10pt;color:#333;margin:0 0 1pt 0;line-height:1.45;',
+    otherLine:'font-family:Calibri,Arial,sans-serif;font-size:10pt;color:#000;margin:2pt 0 0 0;line-height:1.45;'
   };
 
   var body='';
@@ -690,7 +690,7 @@ function downloadResumeDoc(){
 
   // ─── EXPERIENCE ────────────────────────────────────────
   if(d.experience.length>0){
-    body+='<p style="'+S.sectionHeader+'">Professional Experience</p>';
+    body+='<p style="'+S.sectionHeader+'">Work Experience</p>';
     for(var i=0;i<d.experience.length;i++){
       var exp=d.experience[i];
       body+='<p style="'+S.expTitle+'">'+e(exp.role)+' &mdash; '+e(exp.org)+'</p>';
@@ -699,8 +699,8 @@ function downloadResumeDoc(){
         var bt=e(exp.bullets[j]);
         body+='<table cellpadding="0" cellspacing="0" border="0" style="margin:0 0 2pt 0;width:100%;">';
         body+='<tr>';
-        body+='<td valign="top" width="18" style="font-family:Arial;font-size:10pt;color:#000;padding-right:6pt;padding-top:1pt;">&#8226;</td>';
-        body+='<td valign="top" style="font-family:Arial;font-size:10pt;color:#000;line-height:1.4;">'+bt+'</td>';
+        body+='<td valign="top" width="18" style="font-family:Calibri,Arial;font-size:10pt;color:#000;padding-right:6pt;padding-top:1pt;">&#8226;</td>';
+        body+='<td valign="top" style="font-family:Calibri,Arial;font-size:10pt;color:#000;line-height:1.45;">'+bt+'</td>';
         body+='</tr></table>';
       }
       if(i<d.experience.length-1)body+='<p style="margin:0;font-size:3pt;">&nbsp;</p>';
@@ -726,8 +726,8 @@ function downloadResumeDoc(){
       var pText=projects[i].replace(/^PROJECT:\s*/,'');
       body+='<table cellpadding="0" cellspacing="0" border="0" style="margin:0 0 2pt 0;width:100%;">';
       body+='<tr>';
-      body+='<td valign="top" width="18" style="font-family:Arial;font-size:10pt;color:#000;padding-right:6pt;padding-top:1pt;">&#8226;</td>';
-      body+='<td valign="top" style="font-family:Arial;font-size:10pt;color:#000;line-height:1.4;">'+e(pText)+'</td>';
+      body+='<td valign="top" width="18" style="font-family:Calibri,Arial;font-size:10pt;color:#000;padding-right:6pt;padding-top:1pt;">&#8226;</td>';
+      body+='<td valign="top" style="font-family:Calibri,Arial;font-size:10pt;color:#000;line-height:1.45;">'+e(pText)+'</td>';
       body+='</tr></table>';
     }
   }
@@ -739,8 +739,8 @@ function downloadResumeDoc(){
     for(var i=0;i<Math.min(certs.length,5);i++){
       body+='<table cellpadding="0" cellspacing="0" border="0" style="margin:0 0 2pt 0;width:100%;">';
       body+='<tr>';
-      body+='<td valign="top" width="18" style="font-family:Arial;font-size:10pt;color:#000;padding-right:6pt;padding-top:1pt;">&#8226;</td>';
-      body+='<td valign="top" style="font-family:Arial;font-size:10pt;color:#000;line-height:1.4;">'+e(certs[i])+'</td>';
+      body+='<td valign="top" width="18" style="font-family:Calibri,Arial;font-size:10pt;color:#000;padding-right:6pt;padding-top:1pt;">&#8226;</td>';
+      body+='<td valign="top" style="font-family:Calibri,Arial;font-size:10pt;color:#000;line-height:1.45;">'+e(certs[i])+'</td>';
       body+='</tr></table>';
     }
   }
@@ -750,7 +750,7 @@ function downloadResumeDoc(){
   h+='<head><meta charset="UTF-8"><title>Resume - '+e(d.name)+'</title>';
   h+='<!--[if gte mso 9]><xml><w:WordDocument><w:View>Print</w:View><w:Zoom>100</w:Zoom><w:DoNotOptimizeForBrowser/></w:WordDocument></xml><![endif]-->';
   h+='</head>';
-  h+='<body style="font-family:Arial,sans-serif;font-size:10pt;color:#000;margin:0.6in 0.7in;">';
+  h+='<body style="font-family:Calibri,Arial,sans-serif;font-size:10.5pt;color:#000;margin:0.65in 0.75in;">';
   h+=body;
   h+='</body></html>';
 
