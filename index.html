@@ -3,354 +3,109 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Cover Letter Generator</title>
+<title>Cover Letter & Resume Fixer</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>??</text></svg>">
 <style>
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-:root {
-  --bg: #0a0a1a;
-  --surface: #12122a;
-  --card: #1a1a3e;
-  --border: #2a2a5a;
-  --text: #d0d0e0;
-  --text-dim: #8888aa;
-  --text-bright: #f0f0ff;
-  --accent: #3b82f6;
-  --accent-hover: #2563eb;
-  --green: #10b981;
-  --red: #ef4444;
-  --radius: 12px;
-  --radius-sm: 8px;
-  --font: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-}
-body {
-  font-family: var(--font);
-  background: var(--bg);
-  color: var(--text);
-  min-height: 100vh;
-  line-height: 1.6;
-}
-::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { background: var(--surface); }
-::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: #3a3a6a; }
-.nav {
-  background: var(--surface);
-  border-bottom: 1px solid var(--border);
-  padding: 16px 24px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  position: sticky;
-  top: 0;
-  z-index: 100;
-  backdrop-filter: blur(12px);
-}
-.nav h1 {
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: var(--text-bright);
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-.nav h1 span { color: var(--accent); }
-.nav-actions { display: flex; align-items: center; gap: 12px; }
-.nav-actions .user-email {
-  font-size: 0.85rem;
-  color: var(--text-dim);
-  display: none;
-}
-.btn {
-  padding: 8px 18px;
-  border: none;
-  border-radius: var(--radius-sm);
-  font-size: 0.875rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-  font-family: var(--font);
-}
-.btn-primary { background: var(--accent); color: #fff; }
-.btn-primary:hover { background: var(--accent-hover); transform: translateY(-1px); }
-.btn-secondary { background: var(--card); color: var(--text); border: 1px solid var(--border); }
-.btn-secondary:hover { background: var(--border); }
-.btn-green { background: var(--green); color: #fff; }
-.btn-green:hover { filter: brightness(1.1); transform: translateY(-1px); }
-.btn-sm { padding: 6px 14px; font-size: 0.8rem; }
-.container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 24px;
-}
-.grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 24px;
-  align-items: start;
-}
-@media (max-width: 900px) {
-  .grid { grid-template-columns: 1fr; }
-  .container { padding: 16px; }
-}
-.card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 24px;
-}
-.card h2 {
-  font-size: 1rem;
-  font-weight: 600;
-  color: var(--text-bright);
-  margin-bottom: 16px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.card h2 .badge {
-  font-size: 0.7rem;
-  font-weight: 500;
-  background: var(--card);
-  color: var(--text-dim);
-  padding: 2px 10px;
-  border-radius: 999px;
-}
-.form-group { margin-bottom: 16px; }
-.form-group label {
-  display: block;
-  font-size: 0.8rem;
-  font-weight: 500;
-  color: var(--text-dim);
-  margin-bottom: 6px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-.form-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: 12px;
-}
-@media (max-width: 600px) {
-  .form-row { grid-template-columns: 1fr; }
-}
-input, textarea, select {
-  width: 100%;
-  padding: 10px 14px;
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  color: var(--text);
-  font-size: 0.9rem;
-  font-family: var(--font);
-  transition: border-color 0.2s;
-  outline: none;
-}
-input:focus, textarea:focus, select:focus {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
-}
-textarea {
-  resize: vertical;
-  min-height: 120px;
-  line-height: 1.5;
-}
-textarea.resume-input { min-height: 180px; }
-textarea.jd-input { min-height: 180px; }
-textarea.letter-output {
-  min-height: 350px;
-  font-family: 'Georgia', 'Times New Roman', serif;
-  font-size: 0.95rem;
-  line-height: 1.7;
-}
-.gen-area {
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
-  margin-top: 4px;
-}
-.gen-area .btn { flex: 1; min-width: 140px; padding: 12px 20px; font-size: 0.95rem; }
-.output-actions {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-  margin-top: 16px;
-}
-.modal-overlay {
-  display: none;
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.7);
-  backdrop-filter: blur(4px);
-  z-index: 1000;
-  justify-content: center;
-  align-items: center;
-}
-.modal-overlay.active { display: flex; }
-.modal {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 32px;
-  width: 400px;
-  max-width: 90vw;
-  max-height: 90vh;
-  overflow-y: auto;
-}
-.modal h2 {
-  font-size: 1.2rem;
-  color: var(--text-bright);
-  margin-bottom: 8px;
-}
-.modal p { color: var(--text-dim); font-size: 0.9rem; margin-bottom: 20px; }
-.modal .form-group { margin-bottom: 14px; }
-.modal .btn { width: 100%; margin-top: 8px; }
-.modal .switch-link {
-  text-align: center;
-  margin-top: 14px;
-  font-size: 0.85rem;
-  color: var(--text-dim);
-}
-.modal .switch-link a {
-  color: var(--accent);
-  cursor: pointer;
-  text-decoration: none;
-}
-.modal .switch-link a:hover { text-decoration: underline; }
-.modal .error-msg {
-  color: var(--red);
-  font-size: 0.85rem;
-  margin-top: 8px;
-  display: none;
-}
-.history-list {
-  margin-top: 24px;
-}
-.history-list h2 {
-  font-size: 1rem;
-  font-weight: 600;
-  color: var(--text-bright);
-  margin-bottom: 12px;
-}
-.history-item {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  padding: 12px 16px;
-  margin-bottom: 8px;
-  cursor: pointer;
-  transition: all 0.2s;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-.history-item:hover {
-  border-color: var(--accent);
-  background: #1e1e44;
-}
-.history-item .title { font-weight: 600; color: var(--text-bright); font-size: 0.9rem; }
-.history-item .meta { font-size: 0.8rem; color: var(--text-dim); }
-.history-item .del-btn {
-  background: none; border: none; color: var(--red); cursor: pointer;
-  font-size: 1rem; padding: 4px; opacity: 0.5; transition: opacity 0.2s;
-}
-.history-item .del-btn:hover { opacity: 1; }
-.toast {
-  position: fixed;
-  bottom: 24px;
-  right: 24px;
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  padding: 14px 20px;
-  font-size: 0.875rem;
-  color: var(--text-bright);
-  box-shadow: 0 8px 32px rgba(0,0,0,0.4);
-  z-index: 2000;
-  display: none;
-  animation: slideIn 0.3s ease;
-}
-.toast.show { display: block; }
-.toast.success { border-color: var(--green); }
-.toast.error { border-color: var(--red); }
-@keyframes slideIn {
-  from { transform: translateY(20px); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
-}
-.spinner {
-  display: inline-block;
-  width: 16px;
-  height: 16px;
-  border: 2px solid rgba(255,255,255,0.3);
-  border-top-color: #fff;
-  border-radius: 50%;
-  animation: spin 0.6s linear infinite;
-  vertical-align: middle;
-  margin-right: 6px;
-}
-@keyframes spin { to { transform: rotate(360deg); } }
-.empty-state {
-  text-align: center;
-  padding: 40px 20px;
-  color: var(--text-dim);
-}
-.empty-state .icon { font-size: 3rem; margin-bottom: 12px; }
-.empty-state p { font-size: 0.9rem; }
-.config-notice {
-  background: rgba(251, 191, 36, 0.1);
-  border: 1px solid rgba(251, 191, 36, 0.3);
-  border-radius: var(--radius-sm);
-  padding: 16px;
-  margin-bottom: 20px;
-  font-size: 0.85rem;
-  color: #fbbf24;
-  display: none;
-}
-
-/* Upload zone */
-.upload-zone {
-  border: 2px dashed var(--border);
-  border-radius: var(--radius-sm);
-  padding: 24px;
-  text-align: center;
-  cursor: pointer;
-  transition: all 0.2s;
-  margin-bottom: 10px;
-  position: relative;
-}
-.upload-zone:hover, .upload-zone.dragover {
-  border-color: var(--accent);
-  background: rgba(59, 130, 246, 0.05);
-}
-.upload-zone .icon { font-size: 2rem; margin-bottom: 8px; }
-.upload-zone .text { font-size: 0.85rem; color: var(--text-dim); }
-.upload-zone .hint { font-size: 0.75rem; color: var(--text-dim); margin-top: 4px; opacity: 0.6; }
-.upload-zone input[type="file"] {
-  position: absolute; inset: 0; opacity: 0; cursor: pointer;
-}
-.upload-status {
-  display: none;
-  font-size: 0.8rem;
-  padding: 6px 12px;
-  border-radius: var(--radius-sm);
-  margin-bottom: 10px;
-  align-items: center;
-  gap: 8px;
-}
-.upload-status.show { display: flex; }
-.upload-status.success { background: rgba(16, 185, 129, 0.1); color: var(--green); border: 1px solid rgba(16, 185, 129, 0.3); }
-.upload-status.error { background: rgba(239, 68, 68, 0.1); color: var(--red); border: 1px solid rgba(239, 68, 68, 0.3); }
-.upload-status.loading { background: rgba(59, 130, 246, 0.1); color: var(--accent); border: 1px solid rgba(59, 130, 246, 0.3); }
-.upload-status .spinner-sm {
-  display: inline-block; width: 12px; height: 12px;
-  border: 2px solid rgba(255,255,255,0.3); border-top-color: currentColor;
-  border-radius: 50%; animation: spin 0.6s linear infinite;
-}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0a0a1a;--surface:#12122a;--card:#1a1a3e;--border:#2a2a5a;--text:#d0d0e0;--text-dim:#8888aa;--text-bright:#f0f0ff;--accent:#3b82f6;--accent-hover:#2563eb;--green:#10b981;--red:#ef4444;--radius:12px;--radius-sm:8px;--font:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;line-height:1.6}
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:var(--surface)}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+.nav{background:var(--surface);border-bottom:1px solid var(--border);padding:16px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.nav h1{font-size:1.25rem;font-weight:700;color:var(--text-bright);display:flex;align-items:center;gap:10px}
+.nav h1 span{color:var(--accent)}
+.nav-actions{display:flex;align-items:center;gap:12px}
+.nav-actions .user-email{font-size:.85rem;color:var(--text-dim);display:none}
+.tab-bar{display:flex;background:var(--surface);border-bottom:1px solid var(--border);padding:0 24px;position:sticky;top:57px;z-index:99}
+.tab{padding:12px 24px;font-size:.9rem;font-weight:600;cursor:pointer;color:var(--text-dim);border-bottom:2px solid transparent;transition:all .2s;font-family:var(--font);background:none;border-top:none;border-left:none;border-right:none}
+.tab:hover{color:var(--text-bright)}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+.tab-content{display:none}
+.tab-content.active{display:block}
+.btn{padding:8px 18px;border:none;border-radius:var(--radius-sm);font-size:.875rem;font-weight:600;cursor:pointer;transition:all .2s;font-family:var(--font)}
+.btn-primary{background:var(--accent);color:#fff}
+.btn-primary:hover{background:var(--accent-hover);transform:translateY(-1px)}
+.btn-secondary{background:var(--card);color:var(--text);border:1px solid var(--border)}
+.btn-secondary:hover{background:var(--border)}
+.btn-green{background:var(--green);color:#fff}
+.btn-green:hover{filter:brightness(1.1);transform:translateY(-1px)}
+.btn-sm{padding:6px 14px;font-size:.8rem}
+.container{max-width:1200px;margin:0 auto;padding:24px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:start}
+@media(max-width:900px){.grid{grid-template-columns:1fr}.container{padding:16px}}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:24px}
+.card h2{font-size:1rem;font-weight:600;color:var(--text-bright);margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.card h2 .badge{font-size:.7rem;font-weight:500;background:var(--card);color:var(--text-dim);padding:2px 10px;border-radius:999px}
+.form-group{margin-bottom:16px}
+.form-group label{display:block;font-size:.8rem;font-weight:500;color:var(--text-dim);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px}
+.form-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+@media(max-width:600px){.form-row{grid-template-columns:1fr}}
+input,textarea{width:100%;padding:10px 14px;background:var(--card);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-size:.9rem;font-family:var(--font);transition:border-color .2s;outline:none}
+input:focus,textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(59,130,246,.15)}
+textarea{resize:vertical;min-height:120px;line-height:1.5}
+textarea.resume-input{min-height:180px}
+textarea.jd-input{min-height:180px}
+textarea.letter-output{min-height:350px;font-family:Georgia,'Times New Roman',serif;font-size:.95rem;line-height:1.7}
+.gen-area{display:flex;gap:12px;flex-wrap:wrap;margin-top:4px}
+.gen-area .btn{flex:1;min-width:140px;padding:12px 20px;font-size:.95rem}
+.output-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
+.upload-zone{border:2px dashed var(--border);border-radius:var(--radius-sm);padding:24px;text-align:center;cursor:pointer;transition:all .2s;margin-bottom:10px;position:relative}
+.upload-zone:hover,.upload-zone.dragover{border-color:var(--accent);background:rgba(59,130,246,.05)}
+.upload-zone .icon{font-size:2rem;margin-bottom:8px}
+.upload-zone .text{font-size:.85rem;color:var(--text-dim)}
+.upload-zone .hint{font-size:.75rem;color:var(--text-dim);margin-top:4px;opacity:.6}
+.upload-zone input[type="file"]{position:absolute;inset:0;opacity:0;cursor:pointer}
+.upload-status{display:none;font-size:.8rem;padding:6px 12px;border-radius:var(--radius-sm);margin-bottom:10px;align-items:center;gap:8px}
+.upload-status.show{display:flex}
+.upload-status.success{background:rgba(16,185,129,.1);color:var(--green);border:1px solid rgba(16,185,129,.3)}
+.upload-status.error{background:rgba(239,68,68,.1);color:var(--red);border:1px solid rgba(239,68,68,.3)}
+.upload-status.loading{background:rgba(59,130,246,.1);color:var(--accent);border:1px solid rgba(59,130,246,.3)}
+.upload-status .spinner-sm{display:inline-block;width:12px;height:12px;border:2px solid rgba(255,255,255,.3);border-top-color:currentColor;border-radius:50%;animation:spin .6s linear infinite}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(4px);z-index:1000;justify-content:center;align-items:center}
+.modal-overlay.active{display:flex}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:32px;width:400px;max-width:90vw;max-height:90vh;overflow-y:auto}
+.modal h2{font-size:1.2rem;color:var(--text-bright);margin-bottom:8px}
+.modal p{color:var(--text-dim);font-size:.9rem;margin-bottom:20px}
+.modal .form-group{margin-bottom:14px}
+.modal .btn{width:100%;margin-top:8px}
+.modal .switch-link{text-align:center;margin-top:14px;font-size:.85rem;color:var(--text-dim)}
+.modal .switch-link a{color:var(--accent);cursor:pointer;text-decoration:none}
+.modal .error-msg{color:var(--red);font-size:.85rem;margin-top:8px;display:none}
+.history-list{margin-top:24px}
+.history-item{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 16px;margin-bottom:8px;cursor:pointer;transition:all .2s;display:flex;justify-content:space-between;align-items:center}
+.history-item:hover{border-color:var(--accent);background:#1e1e44}
+.history-item .title{font-weight:600;color:var(--text-bright);font-size:.9rem}
+.history-item .meta{font-size:.8rem;color:var(--text-dim)}
+.history-item .del-btn{background:none;border:none;color:var(--red);cursor:pointer;font-size:1rem;padding:4px;opacity:.5}
+.history-item .del-btn:hover{opacity:1}
+.fixed-resume-output{background:#fff;color:#1a1a1a;font-family:Arial,Helvetica,sans-serif;font-size:10.5pt;line-height:1.4;padding:32px 28px;border-radius:var(--radius-sm);min-height:500px;white-space:pre-wrap;overflow-y:auto;max-height:700px}
+.fixed-resume-output .resume-name{font-size:18pt;font-weight:700;text-align:center;margin-bottom:2px;color:#000}
+.fixed-resume-output .resume-contact{text-align:center;font-size:9.5pt;color:#333;margin-bottom:10px}
+.fixed-resume-output .resume-section-title{font-size:10.5pt;font-weight:700;text-transform:uppercase;letter-spacing:1px;border-bottom:1.5px solid #000;padding-bottom:2px;margin-top:12px;margin-bottom:6px;color:#000}
+.fixed-resume-output .resume-item-title{font-weight:700;font-size:10.5pt;color:#000}
+.fixed-resume-output .resume-item-meta{font-style:italic;font-size:10pt;color:#333}
+.fixed-resume-output .resume-item{margin-bottom:4px}
+.fixed-resume-output .resume-bullet{margin-left:16px;font-size:10pt;line-height:1.35}
+.fixed-resume-output .resume-summary{font-size:10pt;line-height:1.4;margin-bottom:4px}
+.fixed-resume-output .resume-skill-matched{background:#dbeafe;color:#1e40af;font-weight:600;padding:1px 4px;border-radius:2px}
+.fixed-resume-output .resume-skills-line{font-size:10pt;line-height:1.6}
+.config-notice{background:rgba(251,191,36,.1);border:1px solid rgba(251,191,36,.3);border-radius:var(--radius-sm);padding:16px;margin-bottom:20px;font-size:.85rem;color:#fbbf24;display:none}
+.toast{position:fixed;bottom:24px;right:24px;background:var(--card);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px 20px;font-size:.875rem;color:var(--text-bright);box-shadow:0 8px 32px rgba(0,0,0,.4);z-index:2000;display:none;animation:slideIn .3s ease}
+.toast.show{display:block}
+.toast.success{border-color:var(--green)}
+.toast.error{border-color:var(--red)}
+@keyframes slideIn{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
+.spinner{display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite;vertical-align:middle;margin-right:6px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.empty-state{text-align:center;padding:40px 20px;color:var(--text-dim)}
+.empty-state .icon{font-size:3rem;margin-bottom:12px}
+.empty-state p{font-size:.9rem}
 </style>
 </head>
 <body>
 <nav class="nav">
-  <h1><span>?</span> Cover Letter Generator</h1>
+  <h1><span>?</span> Cover Letter & Resume Fixer</h1>
   <div class="nav-actions">
     <span class="user-email" id="userEmail"></span>
     <button class="btn btn-primary btn-sm auth-btn" id="authBtn" onclick="openAuth()">Sign In</button>
@@ -358,63 +113,94 @@ textarea.letter-output {
   </div>
 </nav>
 
-<div class="container">
+<div class="tab-bar">
+  <button class="tab active" onclick="switchTab('cover-letter')" id="tabCoverLetter">?? Cover Letter</button>
+  <button class="tab" onclick="switchTab('resume-fixer')" id="tabResumeFixer">?? Resume Fixer</button>
+</div>
+
+<div class="container" id="mainContainer">
   <div class="config-notice" id="configNotice">
-    ? Supabase not configured. Set your <strong>SUPABASE_URL</strong> and <strong>SUPABASE_ANON_KEY</strong> in the script to enable cloud saving. The generator works offline without it.
+    ? Supabase not configured. Set your SUPABASE_URL and SUPABASE_ANON_KEY in the script to enable cloud saving.
   </div>
 
-  <div class="grid">
-    <div class="card">
-      <h2>Your Info <span class="badge">Saved to your account</span></h2>
-      <div class="form-row">
-        <div class="form-group">
-          <label>Name</label>
-          <input type="text" id="userName" placeholder="John Doe">
+  <div class="tab-content active" id="contentCoverLetter">
+    <div class="grid">
+      <div class="card">
+        <h2>Your Info <span class="badge">Saved to your account</span></h2>
+        <div class="form-row">
+          <div class="form-group"><label>Name</label><input type="text" id="userName" placeholder="John Doe"></div>
+          <div class="form-group"><label>Email</label><input type="email" id="userEmailInput" placeholder="john@email.com"></div>
+          <div class="form-group"><label>Phone</label><input type="tel" id="userPhone" placeholder="+1 (555) 123-4567"></div>
         </div>
         <div class="form-group">
-          <label>Email</label>
-          <input type="email" id="userEmailInput" placeholder="john@email.com">
+          <label>Upload or Paste Your Resume</label>
+          <div class="upload-zone" id="uploadZone">
+            <div class="icon">??</div>
+            <div class="text">Click to upload or drag &amp; drop</div>
+            <div class="hint">Supports .txt, .pdf, .docx</div>
+            <input type="file" id="fileInput" accept=".txt,.pdf,.docx">
+          </div>
+          <div class="upload-status" id="uploadStatus"></div>
+          <textarea class="resume-input" id="resumeInput" placeholder="Or paste your resume here..."></textarea>
         </div>
         <div class="form-group">
-          <label>Phone</label>
-          <input type="tel" id="userPhone" placeholder="+1 (555) 123-4567">
+          <label>Paste Job Description</label>
+          <textarea class="jd-input" id="jdInput" placeholder="Paste the job description here..."></textarea>
+        </div>
+        <div class="gen-area">
+          <button class="btn btn-primary" onclick="generateCoverLetter()">? Generate Cover Letter</button>
+          <button class="btn btn-secondary" onclick="clearAll()">Clear All</button>
         </div>
       </div>
-      <div class="form-group">
-        <label>Upload or Paste Your Resume</label>
-        <div class="upload-zone" id="uploadZone">
-          <div class="icon">?</div>
-          <div class="text">Click to upload or drag &amp; drop</div>
-          <div class="hint">Supports .txt, .pdf, .docx</div>
-          <input type="file" id="fileInput" accept=".txt,.pdf,.docx">
+      <div class="card">
+        <h2>Cover Letter <span class="badge">Editable</span></h2>
+        <textarea class="letter-output" id="letterOutput" placeholder="Your cover letter will appear here..." readonly style="cursor:default;"></textarea>
+        <div class="output-actions">
+          <button class="btn btn-secondary btn-sm" onclick="downloadTxt('letterOutput','cover-letter.txt')">?? .txt</button>
+          <button class="btn btn-secondary btn-sm" onclick="downloadDoc('letterOutput','cover-letter.doc')">?? .doc</button>
+          <button class="btn btn-green btn-sm" id="saveLetterBtn" onclick="saveLetter()" style="display:none">?? Save</button>
         </div>
-        <div class="upload-status" id="uploadStatus"></div>
-        <textarea class="resume-input" id="resumeInput" placeholder="Or paste your resume here..."></textarea>
-      </div>
-      <div class="form-group">
-        <label>Paste Job Description</label>
-        <textarea class="jd-input" id="jdInput" placeholder="Paste the job description here..."></textarea>
-      </div>
-      <div class="gen-area">
-        <button class="btn btn-primary" id="genBtn" onclick="generateCoverLetter()">? Generate Cover Letter</button>
-        <button class="btn btn-secondary" id="clearBtn" onclick="clearAll()">Clear All</button>
       </div>
     </div>
-
-    <div class="card">
-      <h2>Cover Letter <span class="badge">Editable</span></h2>
-      <textarea class="letter-output" id="letterOutput" placeholder="Your cover letter will appear here..." readonly style="cursor:default;"></textarea>
-      <div class="output-actions">
-        <button class="btn btn-secondary btn-sm" onclick="downloadTxt()">?? Download .txt</button>
-        <button class="btn btn-secondary btn-sm" onclick="downloadDoc()">?? Download .doc</button>
-        <button class="btn btn-green btn-sm" id="saveLetterBtn" onclick="saveLetter()" style="display:none">?? Save to Account</button>
-      </div>
+    <div class="card" id="historySection" style="margin-top:24px;display:none;">
+      <h2>?? Cover Letter History</h2>
+      <div id="historyList"></div>
     </div>
   </div>
 
-  <div class="card" id="historySection" style="margin-top:24px; display:none;">
-    <h2>?? Cover Letter History</h2>
-    <div id="historyList"></div>
+  <div class="tab-content" id="contentResumeFixer">
+    <div class="grid">
+      <div class="card">
+        <h2>Resume &amp; Job Description</h2>
+        <p style="font-size:.85rem;color:var(--text-dim);margin-bottom:14px;">Your resume and JD are shared with the Cover Letter tab.</p>
+        <div class="gen-area" style="margin-bottom:16px;">
+          <button class="btn btn-primary" onclick="fixResume()">?? Fix My Resume</button>
+          <button class="btn btn-secondary" onclick="clearAll()">Clear All</button>
+        </div>
+        <div style="font-size:.8rem;color:var(--text-dim);">
+          <strong>What this does:</strong>
+          <ul style="margin:8px 0 0 18px;line-height:1.6;">
+            <li>Reformats your resume into a clean ATS-friendly single-column layout</li>
+            <li>Matches skills and experience to keywords from the job description</li>
+            <li>Highlights matched keywords in <span style="background:#dbeafe;color:#1e40af;padding:1px 4px;border-radius:2px;">blue</span></li>
+            <li>Prioritizes matched skills at the top of your skills section</li>
+            <li>Download as .doc (opens in Word, editable)</li>
+          </ul>
+        </div>
+      </div>
+      <div class="card">
+        <h2>Fixed Resume <span class="badge">ATS-Friendly</span></h2>
+        <div class="fixed-resume-output" id="fixedResumeOutput">
+          <div class="empty-state" style="padding:60px 20px;">
+            <div class="icon">??</div>
+            <p>Upload your resume and paste a job description, then click <strong>Fix My Resume</strong>.</p>
+          </div>
+        </div>
+        <div class="output-actions">
+          <button class="btn btn-secondary btn-sm" onclick="downloadResumeDoc()">?? Download .doc</button>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -422,649 +208,315 @@ textarea.letter-output {
   <div class="modal">
     <h2 id="authModalTitle">Sign In</h2>
     <p id="authModalDesc">Sign in to save your profile and cover letters.</p>
-    <div class="form-group">
-      <label>Email</label>
-      <input type="email" id="authEmail" placeholder="you@email.com">
-    </div>
-    <div class="form-group">
-      <label>Password</label>
-      <input type="password" id="authPassword" placeholder="At least 6 characters">
-    </div>
+    <div class="form-group"><label>Email</label><input type="email" id="authEmail" placeholder="you@email.com"></div>
+    <div class="form-group"><label>Password</label><input type="password" id="authPassword" placeholder="At least 6 chars"></div>
     <div class="error-msg" id="authError"></div>
     <button class="btn btn-primary" id="authSubmitBtn" onclick="handleAuth()">Sign In</button>
-    <div class="switch-link">
-      <span id="authSwitchText">Don't have an account?</span>
-      <a id="authSwitchLink" onclick="toggleAuthMode()">Sign Up</a>
-    </div>
-    <div class="switch-link" style="margin-top:8px;">
-      <a onclick="closeAuth()" style="color:var(--text-dim);">Close</a>
-    </div>
+    <div class="switch-link"><span id="authSwitchText">Don't have an account?</span> <a id="authSwitchLink" onclick="toggleAuthMode()">Sign Up</a></div>
+    <div class="switch-link" style="margin-top:8px;"><a onclick="closeAuth()" style="color:var(--text-dim);">Close</a></div>
   </div>
 </div>
 
 <div class="toast" id="toast"></div>
-
 <script>
-const SUPABASE_URL = 'https://qsbasmcjpjvgpuyhfyia.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFzYmFzbWNqcGp2Z3B1eWhmeWlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMwNTIxMTUsImV4cCI6MjA5ODYyODExNX0.C941_wofmCz3l0ZgF7Rp93kzYRHlAePpmLBRZ6l31t4';
+const SUPABASE_URL='https://qsbasmcjpjvgpuyhfyia.supabase.co';
+const SUPABASE_ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFzYmFzbWNqcGp2Z3B1eWhmeWlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMwNTIxMTUsImV4cCI6MjA5ODYyODExNX0.C941_wofmCz3l0ZgF7Rp93kzYRHlAePpmLBRZ6l31t4';
+let supabase=null,currentUser=null,authMode='signin';
 
-let supabase = null;
-let currentUser = null;
-let authMode = 'signin';
+function initSupabase(){
+  if(!SUPABASE_URL||!SUPABASE_ANON_KEY){document.getElementById('configNotice').style.display='block';return}
+  supabase=supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);checkSession()
+}
+async function checkSession(){try{const{data:{session}}=await supabase.auth.getSession();if(session){currentUser=session.user;updateAuthUI();loadProfile();loadHistory()}}catch(e){}}
+function updateAuthUI(){
+  var ue=document.getElementById('userEmail'),ab=document.getElementById('authBtn'),lb=document.getElementById('logoutBtn'),sb=document.getElementById('saveLetterBtn'),hs=document.getElementById('historySection');
+  if(currentUser){ab.style.display='none';lb.style.display='inline-flex';ue.textContent=currentUser.email;ue.style.display='inline';if(sb)sb.style.display='inline-flex';if(hs)hs.style.display='block'}
+  else{ab.style.display='inline-flex';lb.style.display='none';ue.style.display='none';if(sb)sb.style.display='none';if(hs)hs.style.display='none'}
+}
+function openAuth(){
+  authMode='signin';
+  document.getElementById('authModalTitle').textContent='Sign In';
+  document.getElementById('authModalDesc').textContent='Sign in to save your profile and cover letters.';
+  document.getElementById('authSubmitBtn').textContent='Sign In';
+  document.getElementById('authSwitchText').textContent="Don't have an account?";
+  document.getElementById('authSwitchLink').textContent='Sign Up';
+  document.getElementById('authError').style.display='none';
+  document.getElementById('authEmail').value='';document.getElementById('authPassword').value='';
+  document.getElementById('authModal').classList.add('active')
+}
+function closeAuth(){document.getElementById('authModal').classList.remove('active')}
+function toggleAuthMode(){
+  authMode=authMode==='signin'?'signup':'signin';
+  var t=document.getElementById('authModalTitle'),d=document.getElementById('authModalDesc'),b=document.getElementById('authSubmitBtn'),st=document.getElementById('authSwitchText'),sl=document.getElementById('authSwitchLink');
+  if(authMode==='signin'){t.textContent='Sign In';d.textContent='Sign in to save your profile and cover letters.';b.textContent='Sign In';st.textContent="Don't have an account?";sl.textContent='Sign Up'}
+  else{t.textContent='Sign Up';d.textContent='Create an account to save your profile and cover letters.';b.textContent='Sign Up';st.textContent='Already have an account?';sl.textContent='Sign In'}
+  document.getElementById('authError').style.display='none'
+}
+async function handleAuth(){
+  var email=document.getElementById('authEmail').value.trim(),password=document.getElementById('authPassword').value,err=document.getElementById('authError');
+  if(!email||!password){err.textContent='Please fill in all fields.';err.style.display='block';return}
+  if(password.length<6){err.textContent='Password must be at least 6 characters.';err.style.display='block';return}
+  var btn=document.getElementById('authSubmitBtn');btn.disabled=true;btn.innerHTML='<span class="spinner"></span> Processing...';
+  try{
+    var result=authMode==='signin'?await supabase.auth.signInWithPassword({email,password}):await supabase.auth.signUp({email,password});
+    if(result.error){err.textContent=result.error.message;err.style.display='block';btn.disabled=false;btn.textContent=authMode==='signin'?'Sign In':'Sign Up';return}
+    if(authMode==='signup'&&result.data.user?.identities?.length===0){err.textContent='An account with this email already exists.';err.style.display='block';btn.disabled=false;btn.textContent='Sign Up';return}
+    currentUser=result.data.user||result.data.session?.user;closeAuth();updateAuthUI();
+    if(currentUser){loadProfile();loadHistory();showToast('Signed in!','success')}
+  }catch(e){err.textContent='Something went wrong.';err.style.display='block'}
+  btn.disabled=false;btn.textContent=authMode==='signin'?'Sign In':'Sign Up'
+}
+async function signOut(){await supabase.auth.signOut();currentUser=null;updateAuthUI();document.getElementById('historyList').innerHTML='';showToast('Signed out.','success')}
+async function saveProfile(){
+  if(!currentUser||!supabase)return;
+  try{await supabase.from('profiles').upsert({id:currentUser.id,name:document.getElementById('userName').value.trim(),email:document.getElementById('userEmailInput').value.trim(),phone:document.getElementById('userPhone').value.trim(),resume_text:document.getElementById('resumeInput').value.trim(),updated_at:new Date().toISOString()},{onConflict:'id'})}catch(e){}
+}
+async function loadProfile(){
+  if(!currentUser||!supabase)return;
+  try{var{data,error}=await supabase.from('profiles').select('*').eq('id',currentUser.id).single();if(error||!data)return;document.getElementById('userName').value=data.name||'';document.getElementById('userEmailInput').value=data.email||'';document.getElementById('userPhone').value=data.phone||'';document.getElementById('resumeInput').value=data.resume_text||''}catch(e){}
+}
+['userName','userEmailInput','userPhone','resumeInput'].forEach(function(id){var el=document.getElementById(id);if(el)el.addEventListener('input',debounce(saveProfile,1000))});
 
-function initSupabase() {
-  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
-    document.getElementById('configNotice').style.display = 'block';
-    return;
-  }
-  supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-  checkSession();
+function switchTab(name){
+  document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('active')});
+  document.querySelectorAll('.tab-content').forEach(function(c){c.classList.remove('active')});
+  var map={coverletter:'CoverLetter','resumefixer':'ResumeFixer'};
+  var key=name.replace(/-([a-z])/g,function(g){return g[1].toUpperCase()});
+  document.getElementById('tab'+key.charAt(0).toUpperCase()+key.slice(1)).classList.add('active');
+  document.getElementById('content'+key.charAt(0).toUpperCase()+key.slice(1)).classList.add('active')
 }
 
-async function checkSession() {
-  try {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (session) {
-      currentUser = session.user;
-      updateAuthUI();
-      loadProfile();
-      loadHistory();
-    }
-  } catch (e) { console.warn('Supabase init error:', e); }
+var uploadZone=document.getElementById('uploadZone'),fileInput=document.getElementById('fileInput'),uploadStatus=document.getElementById('uploadStatus');
+function setUploadStatus(m,t){uploadStatus.textContent=m;uploadStatus.className='upload-status show '+(t||'')}
+function hideUploadStatus(){uploadStatus.className='upload-status'}
+function readFileAsText(f){return new Promise(function(r,e){var rd=new FileReader();rd.onload=function(){r(rd.result)};rd.onerror=function(){e(new Error('Failed'))};rd.readAsText(f)})}
+function readFileAsArrayBuffer(f){return new Promise(function(r,e){var rd=new FileReader();rd.onload=function(){r(rd.result)};rd.onerror=function(){e(new Error('Failed'))};rd.readAsArrayBuffer(f)})}
+function handleFile(f){
+  if(!f)return;var ext=f.name.split('.').pop().toLowerCase();
+  if(ext==='txt'){
+    setUploadStatus('Reading '+f.name+'...','loading');
+    readFileAsText(f).then(function(t){document.getElementById('resumeInput').value=t;setUploadStatus('Loaded '+f.name,'success');setTimeout(hideUploadStatus,3000)}).catch(function(){setUploadStatus('Failed.','error')})
+  }else if(ext==='pdf'){
+    setUploadStatus('Extracting PDF...','loading');
+    readFileAsArrayBuffer(f).then(function(buf){
+      if(typeof pdfjsLib==='undefined'){setUploadStatus('PDF lib not loaded.','error');return}
+      return pdfjsLib.getDocument({data:buf}).promise;
+    }).then(function(pdf){
+      var ps=[];for(var i=1;i<=pdf.numPages;i++)ps.push(pdf.getPage(i).then(function(p){return p.getTextContent().then(function(c){return c.items.map(function(x){return x.str}).join(' ')})}));
+      return Promise.all(ps).then(function(p){return p.join('\n\n')});
+    }).then(function(t){document.getElementById('resumeInput').value=t;setUploadStatus('Loaded '+f.name,'success');setTimeout(hideUploadStatus,3000)}).catch(function(){setUploadStatus('Failed to read PDF.','error')})
+  }else if(ext==='docx'){
+    setUploadStatus('Extracting DOCX...','loading');
+    readFileAsArrayBuffer(f).then(function(buf){
+      if(typeof mammoth==='undefined'){setUploadStatus('DOCX lib not loaded.','error');return}
+      return mammoth.extractRawText({arrayBuffer:buf});
+    }).then(function(r){document.getElementById('resumeInput').value=r.value;setUploadStatus('Loaded '+f.name,'success');setTimeout(hideUploadStatus,3000)}).catch(function(){setUploadStatus('Failed to read DOCX.','error')})
+  }else setUploadStatus('Unsupported: .'+ext,'error')
 }
-
-function updateAuthUI() {
-  const authBtn = document.getElementById('authBtn');
-  const logoutBtn = document.getElementById('logoutBtn');
-  const userEmail = document.getElementById('userEmail');
-  const saveBtn = document.getElementById('saveLetterBtn');
-  if (currentUser) {
-    authBtn.style.display = 'none';
-    logoutBtn.style.display = 'inline-flex';
-    userEmail.textContent = currentUser.email;
-    userEmail.style.display = 'inline';
-    saveBtn.style.display = 'inline-flex';
-    document.getElementById('historySection').style.display = 'block';
-  } else {
-    authBtn.style.display = 'inline-flex';
-    logoutBtn.style.display = 'none';
-    userEmail.style.display = 'none';
-    saveBtn.style.display = 'none';
-    document.getElementById('historySection').style.display = 'none';
-  }
+fileInput.addEventListener('change',function(e){if(e.target.files&&e.target.files[0])handleFile(e.target.files[0]);fileInput.value=''});
+uploadZone.addEventListener('dragover',function(e){e.preventDefault();uploadZone.classList.add('dragover')});
+uploadZone.addEventListener('dragleave',function(){uploadZone.classList.remove('dragover')});
+uploadZone.addEventListener('drop',function(e){e.preventDefault();uploadZone.classList.remove('dragover');if(e.dataTransfer.files&&e.dataTransfer.files[0])handleFile(e.dataTransfer.files[0])});
+uploadZone.addEventListener('click',function(){fileInput.click()});
+function extractJobInfo(t){
+  var title='',company='',lines=t.split('\n').filter(function(l){return l.trim()});
+  var tp=[/(?:job\s*title|position|role|we\s*are\s*hiring\s*a\s*n?|title)\s*:?\s*(.+)/i,/(?:seeking|hiring|looking\s*for|need\s*a\s*n?)\s*(.+?)(?:\s*at\s*|\s*with\s*|\s*for\s*|$)/i,/^(?:senior|junior|lead|principal|staff|head\s*of)?\s*(.+?)\s*(?:engineer|developer|designer|manager|analyst|specialist|architect|consultant|coordinator|associate|director)/i];
+  for(var i=0;i<tp.length;i++){var m=t.match(tp[i]);if(m&&m[1]){title=m[1].trim();break}}
+  if(!title){for(var i=0;i<Math.min(5,lines.length);i++){var c=lines[i].replace(/^[#*\-]\s*/,'').trim();if(c.length>10&&c.length<80&&/[A-Z]/.test(c[0])&&!c.endsWith('.')){title=c;break}}}
+  var cp=[/(?:at|with|for|join)\s+([A-Z][A-Za-z0-9\s&.]+?)(?:\s*(?:is\s*(?:looking|seeking|hiring)|team|\||\n|\.|,|\s*$))/i,/(?:company|organization|firm)\s*:?\s*(.+)/i,/(?:about|our)\s+company\b[\s\S]{0,50}?([A-Z][A-Za-z0-9\s&.]{3,40})/i];
+  for(var i=0;i<cp.length;i++){var m=t.match(cp[i]);if(m&&m[1]){company=m[1].trim();break}}
+  if(!company){for(var i=0;i<lines.length;i++){var m=lines[i].match(/(?:at|with|for)\s+([A-Z][a-zA-Z0-9]+(?:\s+[A-Z][a-zA-Z0-9]+)+)/);if(m){company=m[1].trim();break}}}
+  return{title:title||'the position',company:company||'your company'}
 }
-
-function openAuth() {
-  authMode = 'signin';
-  document.getElementById('authModalTitle').textContent = 'Sign In';
-  document.getElementById('authModalDesc').textContent = 'Sign in to save your profile and cover letters.';
-  document.getElementById('authSubmitBtn').textContent = 'Sign In';
-  document.getElementById('authSwitchText').textContent = "Don't have an account?";
-  document.getElementById('authSwitchLink').textContent = 'Sign Up';
-  document.getElementById('authError').style.display = 'none';
-  document.getElementById('authEmail').value = '';
-  document.getElementById('authPassword').value = '';
-  document.getElementById('authModal').classList.add('active');
+var sk=/\b(JavaScript|TypeScript|Python|Java|C#|C\+\+|Ruby|Go|Rust|Swift|Kotlin|PHP|React|Angular|Vue|Next\.?js|Node\.?js|Express|Django|Flask|Spring|REST|GraphQL|HTML|CSS|Sass|Tailwind|Bootstrap|jQuery|SQL|PostgreSQL|MySQL|MongoDB|Redis|Firebase|Supabase|AWS|Azure|GCP|Docker|Kubernetes|CI\/CD|Git|Excel|Tableau|Power\s*BI|Figma|Photoshop|Jira|Confluence|leadership|management|communication|teamwork|problem.solving|analysis)\b/gi;
+function extractSkills(t){
+  var found=[],m;while((m=sk.exec(t))!==null)found.push(m[0]);
+  var rs=t.match(/(?:requirements?|qualifications?|you\s+(?:have|bring|should)\s*(?:have)?)\s*:?([\s\S]*?)(?:\n\n|\n#|$)/i);
+  if(rs){rs[1].split('\n').forEach(function(l){var c=l.replace(/^[\s\-*\d.]+\s*/,'').trim();if(c.length>5&&c.length<100)found.push(c)})}
+  return[...new Set(found.map(function(s){return s.charAt(0).toUpperCase()+s.slice(1)}))]
 }
-
-function closeAuth() {
-  document.getElementById('authModal').classList.remove('active');
+function extractResumeSkills(t){
+  var found=extractSkills(t);
+  var sec=t.match(/skills?\s*:?([\s\S]*?)(?:\n\n|\n[A-Z]|\n-{3}|$)/i);
+  if(sec){sec[1].split(/[,�\n|/]/).forEach(function(p){var c=p.trim();if(c.length>1&&c.length<50)found.push(c.charAt(0).toUpperCase()+c.slice(1))})}
+  var s=new Set(),u=[];for(var i=0;i<found.length;i++){var lc=found[i].toLowerCase();if(!s.has(lc)){s.add(lc);u.push(found[i])}}return u
 }
-
-function toggleAuthMode() {
-  authMode = authMode === 'signin' ? 'signup' : 'signin';
-  const title = document.getElementById('authModalTitle');
-  const desc = document.getElementById('authModalDesc');
-  const btn = document.getElementById('authSubmitBtn');
-  const switchText = document.getElementById('authSwitchText');
-  const switchLink = document.getElementById('authSwitchLink');
-  if (authMode === 'signin') {
-    title.textContent = 'Sign In';
-    desc.textContent = 'Sign in to save your profile and cover letters.';
-    btn.textContent = 'Sign In';
-    switchText.textContent = "Don't have an account?";
-    switchLink.textContent = 'Sign Up';
-  } else {
-    title.textContent = 'Sign Up';
-    desc.textContent = 'Create an account to save your profile and cover letters.';
-    btn.textContent = 'Sign Up';
-    switchText.textContent = 'Already have an account?';
-    switchLink.textContent = 'Sign In';
-  }
-  document.getElementById('authError').style.display = 'none';
-}
-
-async function handleAuth() {
-  const email = document.getElementById('authEmail').value.trim();
-  const password = document.getElementById('authPassword').value;
-  const errorEl = document.getElementById('authError');
-  if (!email || !password) {
-    errorEl.textContent = 'Please fill in all fields.';
-    errorEl.style.display = 'block';
-    return;
-  }
-  if (password.length < 6) {
-    errorEl.textContent = 'Password must be at least 6 characters.';
-    errorEl.style.display = 'block';
-    return;
-  }
-  const btn = document.getElementById('authSubmitBtn');
-  btn.disabled = true;
-  btn.innerHTML = '<span class="spinner"></span> Processing...';
-  try {
-    let result;
-    if (authMode === 'signin') {
-      result = await supabase.auth.signInWithPassword({ email, password });
-    } else {
-      result = await supabase.auth.signUp({ email, password });
-    }
-    if (result.error) {
-      errorEl.textContent = result.error.message;
-      errorEl.style.display = 'block';
-      btn.disabled = false;
-      btn.textContent = authMode === 'signin' ? 'Sign In' : 'Sign Up';
-      return;
-    }
-    if (authMode === 'signup' && result.data.user?.identities?.length === 0) {
-      errorEl.textContent = 'An account with this email already exists. Please sign in.';
-      errorEl.style.display = 'block';
-      btn.disabled = false;
-      btn.textContent = 'Sign Up';
-      return;
-    }
-    currentUser = result.data.user || result.data.session?.user;
-    closeAuth();
-    updateAuthUI();
-    if (currentUser) {
-      loadProfile();
-      loadHistory();
-      showToast('Signed in successfully!', 'success');
-    }
-  } catch (e) {
-    errorEl.textContent = 'Something went wrong. Please try again.';
-    errorEl.style.display = 'block';
-  }
-  btn.disabled = false;
-  btn.textContent = authMode === 'signin' ? 'Sign In' : 'Sign Up';
-}
-
-async function signOut() {
-  await supabase.auth.signOut();
-  currentUser = null;
-  updateAuthUI();
-  document.getElementById('historyList').innerHTML = '';
-  showToast('Signed out.', 'success');
-}
-
-async function saveProfile() {
-  if (!currentUser || !supabase) return;
-  const name = document.getElementById('userName').value.trim();
-  const email = document.getElementById('userEmailInput').value.trim();
-  const phone = document.getElementById('userPhone').value.trim();
-  const resume = document.getElementById('resumeInput').value.trim();
-  try {
-    const { error } = await supabase.from('profiles').upsert({
-      id: currentUser.id,
-      name, email, phone,
-      resume_text: resume,
-      updated_at: new Date().toISOString()
-    }, { onConflict: 'id' });
-    if (error) console.warn('Profile save error:', error);
-  } catch (e) {}
-}
-
-async function loadProfile() {
-  if (!currentUser || !supabase) return;
-  try {
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', currentUser.id)
-      .single();
-    if (error || !data) return;
-    document.getElementById('userName').value = data.name || '';
-    document.getElementById('userEmailInput').value = data.email || '';
-    document.getElementById('userPhone').value = data.phone || '';
-    document.getElementById('resumeInput').value = data.resume_text || '';
-  } catch (e) {}
-}
-
-['userName','userEmailInput','userPhone','resumeInput'].forEach(id => {
-  document.getElementById(id).addEventListener('input', debounce(saveProfile, 1000));
-});
-
-function extractJobInfo(text) {
-  let title = '';
-  let company = '';
-  const lines = text.split('\n').filter(l => l.trim());
-  const titlePatterns = [
-    /(?:job\s*title|position|role|we\s*are\s*hiring\s*a\s*n?|title)\s*:?\s*(.+)/i,
-    /(?:seeking|hiring|looking\s*for|need\s*a\s*n?)\s*(.+?)(?:\s*at\s*|\s*with\s*|\s*for\s*|$)/i,
-    /^(?:senior|junior|lead|principal|staff|head\s*of)?\s*(.+?)\s*(?:engineer|developer|designer|manager|analyst|specialist|architect|consultant|coordinator|associate|director)/i
-  ];
-  for (const p of titlePatterns) {
-    const m = text.match(p);
-    if (m && m[1]) { title = m[1].trim(); break; }
-  }
-  if (!title) {
-    for (const line of lines.slice(0, 5)) {
-      const clean = line.replace(/^[#*\-]\s*/, '').trim();
-      if (clean.length > 10 && clean.length < 80 && /[A-Z]/.test(clean[0]) && !clean.endsWith('.')) {
-        title = clean; break;
+function generateCoverLetter(){
+  var jd=document.getElementById('jdInput').value.trim(),resume=document.getElementById('resumeInput').value.trim();
+  var name=document.getElementById('userName').value.trim()||'Applicant',email=document.getElementById('userEmailInput').value.trim(),phone=document.getElementById('userPhone').value.trim();
+  if(!jd){showToast('Paste a job description first.','error');return}
+  var info=extractJobInfo(jd),jdSkills=extractSkills(jd),resumeSkills=extractResumeSkills(resume),exp=[];
+  if(resume){
+    var rl=resume.split('\n').filter(function(l){return l.trim()});
+    for(var i=0;i<rl.length;i++){
+      var m=rl[i].match(/^(.+?)\s+(?:at|@|�|-)\s+(.+?)(?:\s*[(\[]|$)/);
+      if(m){
+        var ach=[];
+        for(var j=i+1;j<Math.min(i+4,rl.length);j++){var n=rl[j].trim();if(/^[\s\-*\d.]/.test(n)&&n.replace(/^[\s\-*\d.]+\s*/,'').length>10)ach.push(n.replace(/^[\s\-*\d.]+\s*/,''));else if(/^[A-Z]/.test(n)&&n.includes(' at '))break}
+        exp.push({role:m[1].trim(),org:m[2].trim(),achievements:ach})
       }
     }
   }
-  const companyPatterns = [
-    /(?:at|with|for|join)\s+([A-Z][A-Za-z0-9\s&.]+?)(?:\s*(?:is\s*(?:looking|seeking|hiring)|team|\||\n|\.|,|\s*$))/i,
-    /(?:company|organization|firm)\s*:?\s*(.+)/i,
-    /(?:about|our)\s+company\b[\s\S]{0,50}?([A-Z][A-Za-z0-9\s&.]{3,40})/i
-  ];
-  for (const p of companyPatterns) {
-    const m = text.match(p);
-    if (m && m[1]) { company = m[1].trim(); break; }
+  var matched=jdSkills.filter(function(s){return resumeSkills.some(function(rs){return rs.toLowerCase().includes(s.toLowerCase())||s.toLowerCase().includes(rs.toLowerCase())})});
+  var l='',ct=[name];if(email)ct.push(email);if(phone)ct.push(phone);
+  l+=ct.join('  |  ')+'\n'+'\u2014'.repeat(30)+'\n\n';
+  var d=new Date();l+=d.toLocaleString('en-US',{month:'long'})+' '+d.getDate()+', '+d.getFullYear()+'\n\n';
+  l+='Dear Hiring Manager,\n\nI am writing to express my strong interest in the '+info.title+' position at '+info.company+'. ';
+  if(resume){
+    if(exp.length>0){l+='In my role as '+exp[0].role+' at '+exp[0].org+', I developed expertise that directly aligns with this opportunity. ';if(exp[0].achievements.length>0)l+='For example, '+exp[0].achievements[0].charAt(0).toLowerCase()+exp[0].achievements[0].slice(1)+'. '}
+    if(matched.length>0)l+='\n\nMy experience with '+matched.slice(0,4).join(', ')+' matches your requirements. ';
+    l+="I am eager to bring this skillset to "+info.company+" and contribute to your team's success."
+  }else{l+='I am confident that my background and enthusiasm make me a strong candidate for this role.\n\nI would welcome the opportunity to discuss how my experience aligns with the needs of your team.'}
+  l+='\n\nThank you for considering my application. I look forward to the opportunity to speak with you about how I can contribute to '+info.company+'.\n\nBest regards,\n'+name;
+  var out=document.getElementById('letterOutput');out.value=l;out.style.cursor='text';out.removeAttribute('readonly');
+  showToast('Cover letter generated!','success')
+}
+async function saveLetter(){
+  if(!currentUser||!supabase){showToast('Sign in to save.','error');return}
+  var l=document.getElementById('letterOutput').value.trim(),jd=document.getElementById('jdInput').value.trim();
+  if(!l||l===document.getElementById('letterOutput').placeholder){showToast('Generate first.','error');return}
+  var info=extractJobInfo(jd);
+  try{var{error}=await supabase.from('cover_letters').insert({user_id:currentUser.id,job_description:jd,job_title:info.title,company:info.company,cover_letter:l});if(error)throw error;showToast('Saved!','success');loadHistory()}catch(e){showToast('Error: '+e.message,'error')}
+}
+async function loadHistory(){
+  if(!currentUser||!supabase)return;
+  try{var{data,error}=await supabase.from('cover_letters').select('*').eq('user_id',currentUser.id).order('created_at',{ascending:false}).limit(20);if(error)throw error;var el=document.getElementById('historyList');if(!data||data.length===0){el.innerHTML='<div class="empty-state"><div class="icon">??</div><p>No saved cover letters yet.</p></div>';return};el.innerHTML=data.map(function(cl){return'<div class="history-item" onclick="loadHistoryLetter(\''+cl.id+'\')"><div><div class="title">'+escapeHtml(cl.job_title||'Untitled')+' at '+escapeHtml(cl.company||'Unknown')+'</div><div class="meta">'+new Date(cl.created_at).toLocaleDateString()+'</div></div><button class="del-btn" onclick="event.stopPropagation();deleteLetter(\''+cl.id+'\')">?</button></div>'}).join('')}catch(e){}
+}
+async function loadHistoryLetter(id){
+  if(!supabase)return;
+  try{var{data,error}=await supabase.from('cover_letters').select('*').eq('id',id).single();if(error||!data)throw error;document.getElementById('jdInput').value=data.job_description||'';document.getElementById('letterOutput').value=data.cover_letter||'';document.getElementById('letterOutput').style.cursor='text';document.getElementById('letterOutput').removeAttribute('readonly');showToast('Loaded.','success')}catch(e){showToast('Error loading.','error')}
+}
+async function deleteLetter(id){
+  if(!supabase||!confirm('Delete?'))return;
+  try{await supabase.from('cover_letters').delete().eq('id',id);showToast('Deleted.','success');loadHistory()}catch(e){showToast('Error.','error')}
+}
+function downloadTxt(eid,fn){
+  var t=document.getElementById(eid).value;
+  if(!t||t===document.getElementById(eid).placeholder){showToast('Nothing to download.','error');return}
+  var b=new Blob([t],{type:'text/plain'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=fn;a.click();URL.revokeObjectURL(a.href)
+}
+function downloadDoc(eid,fn){
+  var t=document.getElementById(eid).value;
+  if(!t||t===document.getElementById(eid).placeholder){showToast('Nothing to download.','error');return}
+  var lines=t.split('\n'),body='';
+  for(var i=0;i<lines.length;i++){var l=lines[i].trim();if(l==='')body+='<p>&nbsp;</p>';else if(l.match(/^[�\-=]{3,}/))body+='<hr style="border:none;border-top:1px solid #000;margin:4px 0;">';else body+='<p style="margin:0 0 2px 0;line-height:1.5;">'+escapeHtml(l)+'</p>'}
+  var h='<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Document</title><style>body{font-family:Georgia,"Times New Roman",serif;font-size:12pt;color:#000;max-width:500px;margin:40px auto;padding:0 20px}p{margin:0 0 2px 0;line-height:1.5}</style></head><body>'+body+'</body></html>';
+  var b=new Blob([h],{type:'application/msword'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=fn;a.click();URL.revokeObjectURL(a.href)
+}
+function esc(t){return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+function highlightKW(text,keywords){
+  var r=esc(text);
+  for(var i=0;i<keywords.length;i++){var kw=keywords[i],re=new RegExp('\\b('+kw.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')\\b','gi');r=r.replace(re,'<span class="resume-skill-matched">$1</span>')}
+  return r
+}
+function parseResumeSections(txt){
+  var sec={contact:[],summary:'',experience:[],education:[],skills:[],other:[]},lines=txt.split('\n').filter(function(l){return l.trim()}),cur='contact';
+  var sh={summary:/^(summary|profile|objective|about\s*me)/i,experience:/^(experience|work\s*(history|experience)|employment|professional\s*experience)/i,education:/^(education|academic|qualifications|degree)/i,skills:/^(skills|technical\s*skills|core\s*competencies|expertise)/i,other:/^(certifications|certificates|projects|awards|honors|languages|interests|volunteer|publications|references)/i};
+  for(var i=0;i<lines.length;i++){
+    var l=lines[i].trim(),matched=false;
+    for(var k in sh){if(sh[k].test(l)){cur=k;matched=true;break}}
+    if(matched)continue;
+    if(cur==='contact'){if(l.match(/^[A-Z][a-zA-Z\s.]+$/)&&l.split(' ').length<=4&&!l.match(/@|http|\.com|\(|\)/))sec.contact.push({type:'name',value:l});else if(l.match(/@/))sec.contact.push({type:'email',value:l});else if(l.match(/[\d\-\(\)\+\.]{7,}/))sec.contact.push({type:'phone',value:l});else if(l.match(/linkedin|github|portfolio|http/i))sec.contact.push({type:'link',value:l});else if(l.match(/^[A-Z]/)&&l.length>10)sec.summary+=(sec.summary?' ':'')+l}
+    else if(cur==='summary')sec.summary+=(sec.summary?' ':'')+l;
+    else if(cur==='experience')sec.experience.push(l);
+    else if(cur==='education')sec.education.push(l);
+    else if(cur==='skills')sec.skills.push(l);
+    else sec.other.push(l)
   }
-  if (!company) {
-    for (const line of lines) {
-      const match = line.match(/(?:at|with|for)\s+([A-Z][a-zA-Z0-9]+(?:\s+[A-Z][a-zA-Z0-9]+)+)/);
-      if (match) { company = match[1].trim(); break; }
+  return sec
+}
+function parseExpBlocks(lines){
+  var blocks=[],cur=null;
+  for(var i=0;i<lines.length;i++){
+    var l=lines[i].trim(),m=l.match(/^(.+?)\s+(?:at|@|�|-)\s+(.+?)(?:\s*[(\[]|$)/);
+    if(m){if(cur)blocks.push(cur);cur={role:m[1].trim(),org:m[2].trim(),date:'',bullets:[]};var rest=l.substring(m[0].length).trim();if(rest.match(/[\d]{4}/))cur.date=rest}
+    else if(cur&&l.match(/^[\s\-�*�\d.]/))cur.bullets.push(l.replace(/^[\s\-�*�\d.]+\s*/,''));
+    else if(cur&&l.match(/[\d]{4}|present|current/i)&&l.length<40)cur.date=(cur.date?cur.date+' ':'')+l;
+    else if(cur&&l.length>5)cur.bullets.push(l)
+  }
+  if(cur)blocks.push(cur);return blocks
+}
+function fixResume(){
+  var resume=document.getElementById('resumeInput').value.trim(),jd=document.getElementById('jdInput').value.trim();
+  if(!resume){showToast('Paste or upload a resume first.','error');return}
+  var jdKeywords=jd?extractSkills(jd):[],jdLower=jdKeywords.map(function(s){return s.toLowerCase()});
+  var sections=parseResumeSections(resume);
+  var allSkillLines=sections.skills.join(',').split(/[,;�\n|/]/).map(function(s){return s.trim()}).filter(function(s){return s.length>1});
+  var allSkills=allSkillLines.map(function(s){return s.charAt(0).toUpperCase()+s.slice(1)});
+  var matchedSkills=[],unmatchedSkills=[];
+  for(var i=0;i<allSkills.length;i++){
+    var isMatch=false;
+    for(var j=0;j<jdLower.length;j++){if(allSkills[i].toLowerCase().includes(jdLower[j])||jdLower[j].includes(allSkills[i].toLowerCase())){isMatch=true;break}}
+    if(!isMatch){for(var j=0;j<jdKeywords.length;j++){var kw=jdKeywords[j].toLowerCase();if(allSkills[i].toLowerCase().includes(kw)||kw.includes(allSkills[i].toLowerCase())){isMatch=true;break}}}
+    if(isMatch)matchedSkills.push(allSkills[i]);else unmatchedSkills.push(allSkills[i])
+  }
+  var sortedSkills=[...new Set(matchedSkills.concat(unmatchedSkills))];
+  var expBlocks=parseExpBlocks(sections.experience);
+  var nameEl=sections.contact.find(function(c){return c.type==='name'}),nameStr=nameEl?nameEl.value:document.getElementById('userName').value.trim()||'Your Name';
+  var emailEl=sections.contact.find(function(c){return c.type==='email'}),emailStr=emailEl?emailEl.value:document.getElementById('userEmailInput').value.trim();
+  var phoneEl=sections.contact.find(function(c){return c.type==='phone'}),phoneStr=phoneEl?phoneEl.value:document.getElementById('userPhone').value.trim();
+  var links=sections.contact.filter(function(c){return c.type==='link'}).map(function(c){return c.value});
+  var contactParts=[];if(emailStr)contactParts.push(emailStr);if(phoneStr)contactParts.push(phoneStr);links.forEach(function(l){contactParts.push(l)});
+  var html='<div class="resume-name">'+esc(nameStr)+'</div>';
+  if(contactParts.length>0)html+='<div class="resume-contact">'+esc(contactParts.join('  |  '))+'</div>';
+  if(sections.summary){html+='<div class="resume-section-title">Professional Summary</div><div class="resume-summary">'+esc(sections.summary)+'</div>'}
+  if(sortedSkills.length>0){
+    html+='<div class="resume-section-title">Skills</div><div class="resume-skills-line">';
+    for(var i=0;i<sortedSkills.length;i++){if(i>0)html+='  �  ';if(matchedSkills.indexOf(sortedSkills[i])!==-1)html+='<span class="resume-skill-matched">'+esc(sortedSkills[i])+'</span>';else html+=esc(sortedSkills[i])}
+    html+='</div>'
+  }
+  if(expBlocks.length>0){
+    html+='<div class="resume-section-title">Experience</div>';
+    for(var i=0;i<expBlocks.length;i++){
+      html+='<div class="resume-item"><div class="resume-item-title">'+esc(expBlocks[i].role)+' &mdash; '+esc(expBlocks[i].org)+'</div>';
+      if(expBlocks[i].date)html+='<div class="resume-item-meta">'+esc(expBlocks[i].date)+'</div>';
+      for(var j=0;j<expBlocks[i].bullets.length;j++)html+='<div class="resume-bullet">� '+highlightKW(expBlocks[i].bullets[j],jdKeywords)+'</div>';
+      html+='</div>'
     }
   }
-  return { title: title || 'the position', company: company || 'your company' };
-}
-
-const skillKeywords = [
-  'JavaScript','TypeScript','Python','Java','C#','C\\+\\+','Ruby','Go','Rust','Swift','Kotlin','PHP',
-  'React','Angular','Vue','Next\\.?js','Node\\.?js','Express','Django','Flask','Spring','REST','GraphQL',
-  'HTML','CSS','Sass','Tailwind','Bootstrap','jQuery',
-  'SQL','PostgreSQL','MySQL','MongoDB','Redis','Firebase','Supabase',
-  'AWS','Azure','GCP','Docker','Kubernetes','CI/CD','Git',
-  'Excel','Tableau','Power BI','Figma','Photoshop','Jira','Confluence',
-  'leadership','management','communication','teamwork','problem.solving','analysis'
-];
-
-function extractSkills(text) {
-  const found = [];
-  for (const skill of skillKeywords) {
-    const re = new RegExp('\\b' + skill.replace(/\\\\/g,'\\') + '\\b', 'i');
-    if (re.test(text)) found.push(skill.replace(/\\\\/g,''));
+  if(sections.education.length>0){
+    html+='<div class="resume-section-title">Education</div>';
+    for(var i=0;i<sections.education.length;i++){html+='<div class="resume-item">';if(sections.education[i].match(/Bachelor|Master|PhD|Associate|Degree|BS|BA|MS|MA|MBA|B\.S\.|B\.A\.|M\.S\.|M\.A\./i))html+='<div class="resume-item-title">'+esc(sections.education[i])+'</div>';else html+='<div class="resume-item-meta" style="font-style:normal;">'+esc(sections.education[i])+'</div>';html+='</div>'}
   }
-  const reqSection = text.match(/(?:requirements?|qualifications?|you\s+(?:have|bring|should)\s*(?:have)?)\s*:?([\s\S]*?)(?:\n\n|\n#|$)/i);
-  if (reqSection) {
-    const reqBullets = reqSection[1].split('\n').filter(l => l.trim());
-    for (const line of reqBullets) {
-      const clean = line.replace(/^[\s\-*\d.]+\s*/, '').trim();
-      if (clean.length > 5 && clean.length < 100 && !found.includes(clean)) found.push(clean);
-    }
+  if(sections.other.length>0&&(sections.other.join(' ').match(/certif|project|award|honor|language|volunteer|publication/i))){
+    html+='<div class="resume-section-title">Additional</div>';
+    for(var i=0;i<Math.min(sections.other.length,6);i++)html+='<div class="resume-bullet" style="margin-left:0;">'+esc(sections.other[i])+'</div>'
   }
-  return [...new Set(found)].slice(0, 8);
+  document.getElementById('fixedResumeOutput').innerHTML=html;
+  showToast('Resume fixed! Matched '+matchedSkills.length+' skills.','success')
 }
-
-function extractResumeSkills(text) {
-  const skills = extractSkills(text);
-  const skillsSection = text.match(/skills?\s*:?([\s\S]*?)(?:\n\n|\n[A-Z]|\n-{3}|$)/i);
-  if (skillsSection) {
-    const parts = skillsSection[1].split(/[,�\n|/]/);
-    for (const p of parts) {
-      const clean = p.trim();
-      if (clean.length > 1 && clean.length < 50) skills.push(clean);
-    }
-  }
-  return [...new Set(skills)];
+function downloadResumeDoc(){
+  var el=document.getElementById('fixedResumeOutput'),c=el.innerHTML;
+  if(!c||el.querySelector('.empty-state')){showToast('Fix your resume first.','error');return}
+  var h='<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Fixed Resume</title>'+
+    '<style>body{font-family:Arial,Helvetica,sans-serif;font-size:10.5pt;color:#000;max-width:510px;margin:40px auto;padding:0 28px;line-height:1.4}'+
+    '.resume-name{font-size:18pt;font-weight:700;text-align:center;margin-bottom:2px}'+
+    '.resume-contact{text-align:center;font-size:9.5pt;color:#333;margin-bottom:10px}'+
+    '.resume-section-title{font-size:10.5pt;font-weight:700;text-transform:uppercase;letter-spacing:1px;border-bottom:1.5px solid #000;padding-bottom:2px;margin-top:12px;margin-bottom:6px}'+
+    '.resume-item-title{font-weight:700;font-size:10.5pt}'+
+    '.resume-item-meta{font-style:italic;font-size:10pt;color:#333}'+
+    '.resume-bullet{margin-left:16px;font-size:10pt;line-height:1.35}'+
+    '.resume-summary{font-size:10pt;line-height:1.4;margin-bottom:4px}'+
+    '.resume-skill-matched{background:#dbeafe;color:#1e40af;font-weight:600;padding:1px 4px;border-radius:2px}'+
+    '.resume-skills-line{font-size:10pt;line-height:1.6}'+
+    '</style></head><body>'+c+'</body></html>';
+  var b=new Blob([h],{type:'application/msword'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='fixed-resume.doc';a.click();URL.revokeObjectURL(a.href)
 }
-
-function extractExperience(text) {
-  const exp = [];
-  const lines = text.split('\n').filter(l => l.trim());
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i].trim();
-    const m = line.match(/^(.+?)\s+(?:at|@|�|-)\s+(.+?)(?:\s*[(\[]|$)/);
-    if (m) {
-      const role = m[1].trim();
-      const org = m[2].trim();
-      const achievements = [];
-      for (let j = i + 1; j < Math.min(i + 4, lines.length); j++) {
-        const next = lines[j].trim();
-        if (/^[\s\-*\d.]/.test(next) && next.replace(/^[\s\-*\d.]+\s*/, '').length > 10) {
-          achievements.push(next.replace(/^[\s\-*\d.]+\s*/, ''));
-        } else if (/^[A-Z]/.test(next) && next.includes(' at ')) break;
-      }
-      exp.push({ role, org, achievements });
-    }
-  }
-  return exp;
-}
-
-function generateCoverLetter() {
-  const jd = document.getElementById('jdInput').value.trim();
-  const resume = document.getElementById('resumeInput').value.trim();
-  const name = document.getElementById('userName').value.trim() || 'Applicant';
-  const email = document.getElementById('userEmailInput').value.trim();
-  const phone = document.getElementById('userPhone').value.trim();
-  if (!jd) { showToast('Please paste a job description first.', 'error'); return; }
-  const { title, company } = extractJobInfo(jd);
-  const jdSkills = extractSkills(jd);
-  const resumeSkills = extractResumeSkills(resume);
-  const experience = extractExperience(resume);
-  const matched = jdSkills.filter(s =>
-    resumeSkills.some(rs => rs.toLowerCase().includes(s.toLowerCase()) || s.toLowerCase().includes(rs.toLowerCase()))
-  );
-  let letter = '';
-  const contact = [name];
-  if (email) contact.push(email);
-  if (phone) contact.push(phone);
-  letter += contact.join('  |  ') + '\n';
-  letter += ''.padStart(contact.join('  |  ').length, '\u2014') + '\n\n';
-  const month = new Date().toLocaleString('en-US', { month: 'long' });
-  const day = new Date().getDate();
-  const year = new Date().getFullYear();
-  letter += month + ' ' + day + ', ' + year + '\n\n';
-  letter += 'Dear Hiring Manager,\n\n';
-  letter += 'I am writing to express my strong interest in the ' + title + ' position at ' + company + '. ';
-  if (resume) {
-    if (experience.length > 0) {
-      const exp = experience[0];
-      letter += 'In my role as ' + exp.role + ' at ' + exp.org + ', I developed expertise that directly aligns with this opportunity. ';
-      if (exp.achievements.length > 0) {
-        letter += 'For example, ' + exp.achievements[0].charAt(0).toLowerCase() + exp.achievements[0].slice(1) + '. ';
-      }
-    }
-    if (matched.length > 0) {
-      letter += '\n\nMy experience with ' + matched.slice(0, 4).join(', ') + ' matches your requirements. ';
-    }
-    letter += 'I am eager to bring this skillset to ' + company + ' and contribute to your team\'s success.';
-  } else {
-    letter += 'I am confident that my background and enthusiasm make me a strong candidate for this role.';
-    letter += '\n\nI would welcome the opportunity to discuss how my experience aligns with the needs of your team.';
-  }
-  letter += '\n\nThank you for considering my application. I look forward to the opportunity to speak with you about how I can contribute to ' + company + '.\n\n';
-  letter += 'Best regards,\n' + name;
-  const output = document.getElementById('letterOutput');
-  output.value = letter;
-  output.style.cursor = 'text';
-  output.removeAttribute('readonly');
-  showToast('Cover letter generated!', 'success');
-}
-
-async function saveLetter() {
-  if (!currentUser || !supabase) { showToast('Sign in to save cover letters.', 'error'); return; }
-  const letter = document.getElementById('letterOutput').value.trim();
-  const jd = document.getElementById('jdInput').value.trim();
-  if (!letter || letter === document.getElementById('letterOutput').placeholder) {
-    showToast('Generate a cover letter first.', 'error'); return;
-  }
-  const { title, company } = extractJobInfo(jd);
-  try {
-    const { error } = await supabase.from('cover_letters').insert({
-      user_id: currentUser.id,
-      job_description: jd,
-      job_title: title,
-      company: company,
-      cover_letter: letter
-    });
-    if (error) throw error;
-    showToast('Cover letter saved!', 'success');
-    loadHistory();
-  } catch (e) { showToast('Error saving: ' + e.message, 'error'); }
-}
-
-async function loadHistory() {
-  if (!currentUser || !supabase) return;
-  try {
-    const { data, error } = await supabase
-      .from('cover_letters')
-      .select('*')
-      .eq('user_id', currentUser.id)
-      .order('created_at', { ascending: false })
-      .limit(20);
-    if (error) throw error;
-    const container = document.getElementById('historyList');
-    if (!data || data.length === 0) {
-      container.innerHTML = '<div class="empty-state"><div class="icon">??</div><p>No saved cover letters yet.</p></div>';
-      return;
-    }
-    container.innerHTML = data.map(function(cl) {
-      return '<div class="history-item" onclick="loadHistoryLetter(\'' + cl.id + '\')">' +
-        '<div><div class="title">' + escapeHtml(cl.job_title || 'Untitled') + ' at ' + escapeHtml(cl.company || 'Unknown') + '</div>' +
-        '<div class="meta">' + new Date(cl.created_at).toLocaleDateString() + '  Click to load</div></div>' +
-        '<button class="del-btn" onclick="event.stopPropagation(); deleteLetter(\'' + cl.id + '\')" title="Delete">?</button></div>';
-    }).join('');
-  } catch (e) { console.warn('Load history error:', e); }
-}
-
-async function loadHistoryLetter(id) {
-  if (!supabase) return;
-  try {
-    const { data, error } = await supabase.from('cover_letters').select('*').eq('id', id).single();
-    if (error || !data) throw error || new Error('Not found');
-    document.getElementById('jdInput').value = data.job_description || '';
-    document.getElementById('letterOutput').value = data.cover_letter || '';
-    document.getElementById('letterOutput').style.cursor = 'text';
-    document.getElementById('letterOutput').removeAttribute('readonly');
-    showToast('Loaded saved cover letter.', 'success');
-  } catch (e) { showToast('Error loading letter.', 'error'); }
-}
-
-async function deleteLetter(id) {
-  if (!supabase || !confirm('Delete this cover letter?')) return;
-  try {
-    const { error } = await supabase.from('cover_letters').delete().eq('id', id);
-    if (error) throw error;
-    showToast('Deleted.', 'success');
-    loadHistory();
-  } catch (e) { showToast('Error deleting.', 'error'); }
-}
-
-function downloadTxt() {
-  const text = document.getElementById('letterOutput').value;
-  if (!text || text === document.getElementById('letterOutput').placeholder) {
-    showToast('Generate a cover letter first.', 'error'); return;
-  }
-  const blob = new Blob([text], { type: 'text/plain' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'cover-letter.txt';
-  a.click();
-  URL.revokeObjectURL(a.href);
-}
-
-function downloadDoc() {
-  const text = document.getElementById('letterOutput').value;
-  if (!text || text === document.getElementById('letterOutput').placeholder) {
-    showToast('Generate a cover letter first.', 'error'); return;
-  }
-  var lines = text.split('\n');
-  var bodyHtml = '';
-  for (var i = 0; i < lines.length; i++) {
-    var line = lines[i].trim();
-    if (line === '') {
-      bodyHtml += '<p>&nbsp;</p>';
-    } else if (line.match(/^[—\-=]{3,}/)) {
-      bodyHtml += '<hr style="border:none;border-top:1px solid #333;margin:6px 0;">';
-    } else {
-      bodyHtml += '<p style="margin:0 0 2px 0;line-height:1.5;">' + escapeHtml(line) + '</p>';
-    }
-  }
-  const html = '<!DOCTYPE html>' +
-    '<html><head><meta charset="UTF-8"><title>Cover Letter</title>' +
-    '<style>' +
-      'body { font-family: Georgia, "Times New Roman", serif; font-size: 12pt; color: #000; ' +
-        'max-width: 500px; margin: 40px auto; padding: 0 20px; }' +
-      'p { margin:0 0 2px 0; line-height:1.5; }' +
-    '</style></head><body>' + bodyHtml + '</body></html>';
-  const blob = new Blob([html], { type: 'application/msword' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'cover-letter.doc';
-  a.click();
-  URL.revokeObjectURL(a.href);
-}
-
-function clearAll() {
-  document.getElementById('resumeInput').value = '';
-  document.getElementById('jdInput').value = '';
-  document.getElementById('letterOutput').value = '';
-  document.getElementById('letterOutput').setAttribute('readonly', true);
-  document.getElementById('letterOutput').style.cursor = 'default';
+function clearAll(){
+  document.getElementById('resumeInput').value='';document.getElementById('jdInput').value='';
+  document.getElementById('letterOutput').value='';document.getElementById('letterOutput').setAttribute('readonly',true);document.getElementById('letterOutput').style.cursor='default';
   hideUploadStatus();
-  showToast('Cleared all fields.', 'success');
+  var fr=document.getElementById('fixedResumeOutput');if(fr)fr.innerHTML='<div class="empty-state" style="padding:60px 20px;"><div class="icon">??</div><p>Upload your resume and paste a job description, then click <strong>Fix My Resume</strong>.</p></div>';
+  showToast('Cleared all fields.','success')
 }
-
-// ─── FILE UPLOAD ────────────────────────────────────────────
-const uploadZone = document.getElementById('uploadZone');
-const fileInput = document.getElementById('fileInput');
-const uploadStatus = document.getElementById('uploadStatus');
-
-function setUploadStatus(msg, type) {
-  uploadStatus.textContent = msg;
-  uploadStatus.className = 'upload-status show ' + (type || '');
+function showToast(m,t){
+  var el=document.getElementById('toast');el.textContent=m;el.className='toast show '+(t||'');
+  clearTimeout(el._timeout);el._timeout=setTimeout(function(){el.classList.remove('show')},3000)
 }
-
-function hideUploadStatus() {
-  uploadStatus.className = 'upload-status';
-}
-
-function readFileAsText(file) {
-  return new Promise(function(resolve, reject) {
-    var reader = new FileReader();
-    reader.onload = function(e) { resolve(e.target.result); };
-    reader.onerror = function() { reject(new Error('Failed to read file')); };
-    reader.readAsText(file);
-  });
-}
-
-function readFileAsArrayBuffer(file) {
-  return new Promise(function(resolve, reject) {
-    var reader = new FileReader();
-    reader.onload = function(e) { resolve(e.target.result); };
-    reader.onerror = function() { reject(new Error('Failed to read file')); };
-    reader.readAsArrayBuffer(file);
-  });
-}
-
-function handleFile(file) {
-  if (!file) return;
-  var ext = file.name.split('.').pop().toLowerCase();
-
-  if (ext === 'txt') {
-    setUploadStatus('Reading ' + file.name + '...', 'loading');
-    readFileAsText(file).then(function(text) {
-      document.getElementById('resumeInput').value = text;
-      setUploadStatus('Loaded ' + file.name, 'success');
-      setTimeout(hideUploadStatus, 3000);
-    }).catch(function() {
-      setUploadStatus('Failed to read ' + file.name, 'error');
-    });
-  } else if (ext === 'pdf') {
-    setUploadStatus('Extracting text from PDF...', 'loading');
-    readFileAsArrayBuffer(file).then(function(buffer) {
-      if (typeof pdfjsLib === 'undefined') {
-        setUploadStatus('PDF library not loaded yet. Try again.', 'error');
-        return;
-      }
-      return pdfjsLib.getDocument({ data: buffer }).promise;
-    }).then(function(pdf) {
-      var fullText = '';
-      var pagePromises = [];
-      for (var i = 1; i <= pdf.numPages; i++) {
-        pagePromises.push(pdf.getPage(i).then(function(page) {
-          return page.getTextContent().then(function(content) {
-            return content.items.map(function(item) { return item.str; }).join(' ');
-          });
-        }));
-      }
-      return Promise.all(pagePromises).then(function(pages) {
-        return pages.join('\n\n');
-      });
-    }).then(function(text) {
-      document.getElementById('resumeInput').value = text;
-      setUploadStatus('Loaded ' + file.name + ' (' + text.split(' ').length + ' words)', 'success');
-      setTimeout(hideUploadStatus, 3000);
-    }).catch(function() {
-      setUploadStatus('Failed to read PDF. Try copying the text manually.', 'error');
-    });
-  } else if (ext === 'docx') {
-    setUploadStatus('Extracting text from DOCX...', 'loading');
-    readFileAsArrayBuffer(file).then(function(buffer) {
-      if (typeof mammoth === 'undefined') {
-        setUploadStatus('DOCX library not loaded yet. Try again.', 'error');
-        return;
-      }
-      return mammoth.extractRawText({ arrayBuffer: buffer });
-    }).then(function(result) {
-      document.getElementById('resumeInput').value = result.value;
-      setUploadStatus('Loaded ' + file.name, 'success');
-      setTimeout(hideUploadStatus, 3000);
-    }).catch(function() {
-      setUploadStatus('Failed to read DOCX. Try saving as .txt or .pdf.', 'error');
-    });
-  } else {
-    setUploadStatus('Unsupported file type: .' + ext, 'error');
-  }
-}
-
-// File input change
-fileInput.addEventListener('change', function(e) {
-  if (e.target.files && e.target.files[0]) {
-    handleFile(e.target.files[0]);
-  }
-  // Reset so the same file can be re-uploaded
-  fileInput.value = '';
-});
-
-// Drag & drop
-uploadZone.addEventListener('dragover', function(e) {
-  e.preventDefault();
-  uploadZone.classList.add('dragover');
-});
-uploadZone.addEventListener('dragleave', function() {
-  uploadZone.classList.remove('dragover');
-});
-uploadZone.addEventListener('drop', function(e) {
-  e.preventDefault();
-  uploadZone.classList.remove('dragover');
-  if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-    handleFile(e.dataTransfer.files[0]);
-  }
-});
-
-// Click on zone triggers file input
-uploadZone.addEventListener('click', function() {
-  fileInput.click();
-});
-
-function showToast(msg, type) {
-  const el = document.getElementById('toast');
-  el.textContent = msg;
-  el.className = 'toast show ' + (type || '');
-  clearTimeout(el._timeout);
-  el._timeout = setTimeout(function() { el.classList.remove('show'); }, 3000);
-}
-
-function debounce(fn, ms) {
-  var id;
-  return function() {
-    var args = arguments;
-    var ctx = this;
-    clearTimeout(id);
-    id = setTimeout(function() { fn.apply(ctx, args); }, ms);
-  };
-}
-
-function escapeHtml(str) {
-  var div = document.createElement('div');
-  div.textContent = str;
-  return div.innerHTML;
-}
-
-// Load CDN libraries
-function loadScript(src, cb) {
-  var s = document.createElement('script');
-  s.src = src;
-  s.onload = cb;
-  document.head.appendChild(s);
-}
-
-loadScript('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2', initSupabase);
+function debounce(fn,ms){var id;return function(){var a=arguments,c=this;clearTimeout(id);id=setTimeout(function(){fn.apply(c,a)},ms)}}
+function escapeHtml(s){var d=document.createElement('div');d.textContent=s;return d.innerHTML}
+function loadScript(src,cb){var s=document.createElement('script');s.src=src;if(cb)s.onload=cb;document.head.appendChild(s)}
+loadScript('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2',initSupabase);
 loadScript('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js');
 loadScript('https://cdn.jsdelivr.net/npm/mammoth@1.6.0/mammoth.browser.min.js');
 </script>
