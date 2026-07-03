@@ -338,7 +338,7 @@ function extractSkills(t){
 function extractResumeSkills(t){
   var found=extractSkills(t);
   var sec=t.match(/skills?\s*:?([\s\S]*?)(?:\n\n|\n[A-Z]|\n-{3}|$)/i);
-  if(sec){sec[1].split(/[,•\n|/]/).forEach(function(p){var c=p.trim();if(c.length>1&&c.length<50)found.push(c.charAt(0).toUpperCase()+c.slice(1))})}
+  if(sec){sec[1].split(/[,ï¿½\n|/]/).forEach(function(p){var c=p.trim();if(c.length>1&&c.length<50)found.push(c.charAt(0).toUpperCase()+c.slice(1))})}
   var s=new Set(),u=[];for(var i=0;i<found.length;i++){var lc=found[i].toLowerCase();if(!s.has(lc)){s.add(lc);u.push(found[i])}}return u
 }
 function generateCoverLetter(){
@@ -349,7 +349,7 @@ function generateCoverLetter(){
   if(resume){
     var rl=resume.split('\n').filter(function(l){return l.trim()});
     for(var i=0;i<rl.length;i++){
-      var m=rl[i].match(/^(.+?)\s+(?:at|@|–|-)\s+(.+?)(?:\s*[(\[]|$)/);
+      var m=rl[i].match(/^(.+?)\s+(?:at|@|ï¿½|-)\s+(.+?)(?:\s*[(\[]|$)/);
       if(m){
         var ach=[];
         for(var j=i+1;j<Math.min(i+4,rl.length);j++){var n=rl[j].trim();if(/^[\s\-*\d.]/.test(n)&&n.replace(/^[\s\-*\d.]+\s*/,'').length>10)ach.push(n.replace(/^[\s\-*\d.]+\s*/,''));else if(/^[A-Z]/.test(n)&&n.includes(' at '))break}
@@ -399,8 +399,12 @@ function downloadDoc(eid,fn){
   var t=document.getElementById(eid).value;
   if(!t||t===document.getElementById(eid).placeholder){showToast('Nothing to download.','error');return}
   var lines=t.split('\n'),body='';
-  for(var i=0;i<lines.length;i++){var l=lines[i].trim();if(l==='')body+='<p>&nbsp;</p>';else if(l.match(/^[—\-=]{3,}/))body+='<hr style="border:none;border-top:1px solid #000;margin:4px 0;">';else body+='<p style="margin:0 0 2px 0;line-height:1.5;">'+escapeHtml(l)+'</p>'}
-  var h='<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Document</title><style>body{font-family:Georgia,"Times New Roman",serif;font-size:12pt;color:#000;max-width:500px;margin:40px auto;padding:0 20px}p{margin:0 0 2px 0;line-height:1.5}</style></head><body>'+body+'</body></html>';
+  for(var i=0;i<lines.length;i++){
+    var l=lines[i];
+    if(l.trim()==='')body+='<p style="margin:0;font-size:12pt;line-height:1.5;">&nbsp;</p>';
+    else body+='<p style="margin:0 0 2px 0;font-size:12pt;line-height:1.5;font-family:Georgia,\'Times New Roman\',serif;">'+escapeHtml(l)+'</p>'
+  }
+  var h='<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="UTF-8"><title>Cover Letter</title></head><body style="font-family:Georgia,\'Times New Roman\',serif;font-size:12pt;color:#000;margin:40px 60px;">'+body+'</body></html>';
   var b=new Blob([h],{type:'application/msword'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=fn;a.click();URL.revokeObjectURL(a.href)
 }
 function esc(t){return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
@@ -428,9 +432,9 @@ function parseResumeSections(txt){
 function parseExpBlocks(lines){
   var blocks=[],cur=null;
   for(var i=0;i<lines.length;i++){
-    var l=lines[i].trim(),m=l.match(/^(.+?)\s+(?:at|@|–|-)\s+(.+?)(?:\s*[(\[]|$)/);
+    var l=lines[i].trim(),m=l.match(/^(.+?)\s+(?:at|@|ï¿½|-)\s+(.+?)(?:\s*[(\[]|$)/);
     if(m){if(cur)blocks.push(cur);cur={role:m[1].trim(),org:m[2].trim(),date:'',bullets:[]};var rest=l.substring(m[0].length).trim();if(rest.match(/[\d]{4}/))cur.date=rest}
-    else if(cur&&l.match(/^[\s\-•*·\d.]/))cur.bullets.push(l.replace(/^[\s\-•*·\d.]+\s*/,''));
+    else if(cur&&l.match(/^[\s\-ï¿½*ï¿½\d.]/))cur.bullets.push(l.replace(/^[\s\-ï¿½*ï¿½\d.]+\s*/,''));
     else if(cur&&l.match(/[\d]{4}|present|current/i)&&l.length<40)cur.date=(cur.date?cur.date+' ':'')+l;
     else if(cur&&l.length>5)cur.bullets.push(l)
   }
@@ -441,7 +445,7 @@ function fixResume(){
   if(!resume){showToast('Paste or upload a resume first.','error');return}
   var jdKeywords=jd?extractSkills(jd):[],jdLower=jdKeywords.map(function(s){return s.toLowerCase()});
   var sections=parseResumeSections(resume);
-  var allSkillLines=sections.skills.join(',').split(/[,;•\n|/]/).map(function(s){return s.trim()}).filter(function(s){return s.length>1});
+  var allSkillLines=sections.skills.join(',').split(/[,;ï¿½\n|/]/).map(function(s){return s.trim()}).filter(function(s){return s.length>1});
   var allSkills=allSkillLines.map(function(s){return s.charAt(0).toUpperCase()+s.slice(1)});
   var matchedSkills=[],unmatchedSkills=[];
   for(var i=0;i<allSkills.length;i++){
@@ -462,7 +466,7 @@ function fixResume(){
   if(sections.summary){html+='<div class="resume-section-title">Professional Summary</div><div class="resume-summary">'+esc(sections.summary)+'</div>'}
   if(sortedSkills.length>0){
     html+='<div class="resume-section-title">Skills</div><div class="resume-skills-line">';
-    for(var i=0;i<sortedSkills.length;i++){if(i>0)html+='  ·  ';if(matchedSkills.indexOf(sortedSkills[i])!==-1)html+='<span class="resume-skill-matched">'+esc(sortedSkills[i])+'</span>';else html+=esc(sortedSkills[i])}
+    for(var i=0;i<sortedSkills.length;i++){if(i>0)html+='  ï¿½  ';if(matchedSkills.indexOf(sortedSkills[i])!==-1)html+='<span class="resume-skill-matched">'+esc(sortedSkills[i])+'</span>';else html+=esc(sortedSkills[i])}
     html+='</div>'
   }
   if(expBlocks.length>0){
@@ -470,7 +474,7 @@ function fixResume(){
     for(var i=0;i<expBlocks.length;i++){
       html+='<div class="resume-item"><div class="resume-item-title">'+esc(expBlocks[i].role)+' &mdash; '+esc(expBlocks[i].org)+'</div>';
       if(expBlocks[i].date)html+='<div class="resume-item-meta">'+esc(expBlocks[i].date)+'</div>';
-      for(var j=0;j<expBlocks[i].bullets.length;j++)html+='<div class="resume-bullet">• '+highlightKW(expBlocks[i].bullets[j],jdKeywords)+'</div>';
+      for(var j=0;j<expBlocks[i].bullets.length;j++)html+='<div class="resume-bullet">ï¿½ '+highlightKW(expBlocks[i].bullets[j],jdKeywords)+'</div>';
       html+='</div>'
     }
   }
@@ -486,20 +490,33 @@ function fixResume(){
   showToast('Resume fixed! Matched '+matchedSkills.length+' skills.','success')
 }
 function downloadResumeDoc(){
-  var el=document.getElementById('fixedResumeOutput'),c=el.innerHTML;
-  if(!c||el.querySelector('.empty-state')){showToast('Fix your resume first.','error');return}
-  var h='<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Fixed Resume</title>'+
-    '<style>body{font-family:Arial,Helvetica,sans-serif;font-size:10.5pt;color:#000;max-width:510px;margin:40px auto;padding:0 28px;line-height:1.4}'+
-    '.resume-name{font-size:18pt;font-weight:700;text-align:center;margin-bottom:2px}'+
-    '.resume-contact{text-align:center;font-size:9.5pt;color:#333;margin-bottom:10px}'+
-    '.resume-section-title{font-size:10.5pt;font-weight:700;text-transform:uppercase;letter-spacing:1px;border-bottom:1.5px solid #000;padding-bottom:2px;margin-top:12px;margin-bottom:6px}'+
-    '.resume-item-title{font-weight:700;font-size:10.5pt}'+
-    '.resume-item-meta{font-style:italic;font-size:10pt;color:#333}'+
-    '.resume-bullet{margin-left:16px;font-size:10pt;line-height:1.35}'+
-    '.resume-summary{font-size:10pt;line-height:1.4;margin-bottom:4px}'+
-    '.resume-skill-matched{background:#dbeafe;color:#1e40af;font-weight:600;padding:1px 4px;border-radius:2px}'+
-    '.resume-skills-line{font-size:10pt;line-height:1.6}'+
-    '</style></head><body>'+c+'</body></html>';
+  var el=document.getElementById('fixedResumeOutput');
+  if(!el||el.querySelector('.empty-state')){showToast('Fix your resume first.','error');return}
+  // Build clean inline-styled HTML for Word
+  var lines=el.innerText.split('\n'),body='',inSection=false;
+  for(var i=0;i<lines.length;i++){
+    var raw=lines[i].trim();if(!raw){body+='<p style="margin:0;line-height:1.0;">&nbsp;</p>';continue}
+    // Detect section headers (all caps, followed by underline-style or short)
+    if(raw===raw.toUpperCase()&&raw.length>3&&raw.length<40){
+      body+='<p style="margin:12pt 0 3pt 0;font-size:11pt;font-weight:700;text-transform:uppercase;letter-spacing:1pt;border-bottom:1.5pt solid #000;padding-bottom:2pt;font-family:Arial,sans-serif;color:#000;">'+raw+'</p>';
+      inSection=true;continue
+    }
+    // Name (first line, short, title case)
+    if(i===0&&raw.split(' ').length<=4){
+      body+='<p style="margin:0 0 2pt 0;font-size:18pt;font-weight:700;text-align:center;font-family:Arial,sans-serif;color:#000;">'+raw+'</p>';continue
+    }
+    // Contact line (contains | or @ or phone)
+    if(raw.match(/@|[\d\-\(\)\+\.]{7,}/)){
+      body+='<p style="margin:0 0 8pt 0;font-size:9.5pt;text-align:center;color:#444;font-family:Arial,sans-serif;">'+raw+'</p>';continue
+    }
+    // Bullet points
+    if(raw.match(/^[â€¢\-\*]/)||raw.match(/^\d+\./)){
+      body+='<p style="margin:0 0 1pt 12pt;font-size:10pt;line-height:1.35;font-family:Arial,sans-serif;color:#000;">'+raw+'</p>';continue
+    }
+    // Everything else - body text
+    body+='<p style="margin:0 0 2pt 0;font-size:10pt;line-height:1.35;font-family:Arial,sans-serif;color:#000;">'+raw+'</p>'
+  }
+  var h='<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="UTF-8"><title>Fixed Resume</title></head><body style="font-family:Arial,sans-serif;font-size:10.5pt;color:#000;margin:30pt 50pt;">'+body+'</body></html>';
   var b=new Blob([h],{type:'application/msword'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='fixed-resume.doc';a.click();URL.revokeObjectURL(a.href)
 }
 function clearAll(){
