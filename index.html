@@ -153,10 +153,31 @@ textarea.letter-output{min-height:350px;font-family:Georgia,'Times New Roman',se
   .resume-name{font-size:18pt!important}
   .form-row{grid-template-columns:1fr!important}
   .modal{padding:20px;width:95vw}
-  .skill-cat-modal .modal-inner{width:100%;max-width:100%;max-height:95vh}
-  .skill-cat-row{flex-direction:column;gap:6px}
+  .skill-cat-modal{align-items:flex-end}
+  .skill-cat-modal .modal-inner{width:100%;max-width:100%;max-height:92vh;border-radius:var(--radius) var(--radius) 0 0}
+  .skill-cat-modal .modal-head{padding:14px 16px}
+  .skill-cat-modal .modal-head h2{font-size:.95rem}
+  .skill-cat-modal .modal-body{padding:12px 16px}
+  .skill-cat-modal .modal-foot{padding:12px 16px;flex-direction:column-reverse;gap:8px}
+  .skill-cat-modal .modal-foot .btn{width:100%;padding:12px}
+  .skill-cat-row{flex-direction:column;gap:6px;padding:12px;background:var(--card);border:1px solid var(--border);border-radius:var(--radius-sm);margin-bottom:10px}
   .skill-cat-row .cat-name,.skill-cat-row .cat-keywords{width:100%}
+  .skill-cat-row .cat-name input{padding:10px;font-size:.9rem}
+  .skill-cat-row .cat-keywords textarea{min-height:80px;font-size:.9rem;padding:10px}
+  .skill-cat-row .cat-remove{align-self:flex-end;padding:8px 14px}
   .skill-cat-header{display:none}
+  .ats-score{margin-left:0;margin-top:4px}
+  .history-search{font-size:.9rem;padding:10px 12px}
+  .upload-zone{padding:20px 16px}
+  .upload-zone .icon{font-size:1.5rem}
+  .upload-zone .text{font-size:.8rem}
+}
+@media(max-width:380px){
+  .nav h1{font-size:.85rem}
+  .tab{padding:8px 10px;font-size:.75rem}
+  .card{padding:12px}
+  .btn{padding:6px 12px;font-size:.8rem}
+  .gen-area .btn{padding:10px 14px;font-size:.85rem}
 }
 </style>
 </head>
