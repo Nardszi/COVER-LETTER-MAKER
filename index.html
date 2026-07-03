@@ -79,13 +79,13 @@ textarea.letter-output{min-height:350px;font-family:Georgia,'Times New Roman',se
 .history-item .meta{font-size:.8rem;color:var(--text-dim)}
 .history-item .del-btn{background:none;border:none;color:var(--red);cursor:pointer;font-size:1rem;padding:4px;opacity:.5}
 .history-item .del-btn:hover{opacity:1}
-.fixed-resume-output{background:#fff;color:#1a1a1a;font-family:Arial,Helvetica,sans-serif;font-size:10.5pt;line-height:1.4;padding:32px 28px;border-radius:var(--radius-sm);min-height:500px;white-space:pre-wrap;overflow-y:auto;max-height:700px}
+.fixed-resume-output{background:#fff;color:#1a1a1a;font-family:Arial,Helvetica,sans-serif;font-size:10.5pt;line-height:1.4;padding:32px 28px;border-radius:var(--radius-sm);min-height:500px;overflow-y:auto;max-height:700px}
 .fixed-resume-output .resume-name{font-size:18pt;font-weight:700;text-align:center;margin-bottom:2px;color:#000}
-.fixed-resume-output .resume-contact{text-align:center;font-size:9.5pt;color:#333;margin-bottom:10px}
-.fixed-resume-output .resume-section-title{font-size:10.5pt;font-weight:700;text-transform:uppercase;letter-spacing:1px;border-bottom:1.5px solid #000;padding-bottom:2px;margin-top:12px;margin-bottom:6px;color:#000}
-.fixed-resume-output .resume-item-title{font-weight:700;font-size:10.5pt;color:#000}
-.fixed-resume-output .resume-item-meta{font-style:italic;font-size:10pt;color:#333}
-.fixed-resume-output .resume-item{margin-bottom:4px}
+.fixed-resume-output .resume-contact{text-align:center;font-size:9.5pt;color:#555;margin-bottom:10px}
+.fixed-resume-output .resume-section-title{font-size:10.5pt;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;border-bottom:1.5px solid #333;padding-bottom:2px;margin-top:14px;margin-bottom:6px;color:#000}
+.fixed-resume-output .resume-item-title{font-weight:700;font-size:10.5pt;color:#000;margin:6px 0 0 0}
+.fixed-resume-output .resume-item-meta{font-style:italic;font-size:10pt;color:#666}
+.fixed-resume-output .resume-item{margin-bottom:6px}
 .fixed-resume-output .resume-bullet{margin-left:16px;font-size:10pt;line-height:1.35;text-indent:-8pt;padding-left:8pt}
 .fixed-resume-output .resume-summary{font-size:10pt;line-height:1.4;margin-bottom:4px}
 .fixed-resume-output .resume-skill-matched{background:#dbeafe;color:#1e40af;font-weight:600;padding:1px 4px;border-radius:2px}
@@ -615,68 +615,133 @@ function downloadResumeDoc(){
   if(!_resumeData){var el=document.getElementById('fixedResumeOutput');if(!el||el.querySelector('.empty-state')){showToast('Fix your resume first.','error');return}}
   if(!_resumeData)return;
   var d=_resumeData;
-  function e(t){return (t||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+  function e(t){return (t||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+
+  // Word-compatible styles
+  var S={
+    name:'font-family:Arial,sans-serif;font-size:16pt;font-weight:700;text-align:center;color:#000;margin:0 0 2pt 0;letter-spacing:0.5pt;',
+    contact:'font-family:Arial,sans-serif;font-size:9pt;text-align:center;color:#555;margin:0 0 8pt 0;',
+    sectionHeader:'font-family:Arial,sans-serif;font-size:10.5pt;font-weight:700;text-transform:uppercase;letter-spacing:0.5pt;color:#000;margin:10pt 0 2pt 0;border-bottom:1pt solid #333;padding-bottom:2pt;',
+    body:'font-family:Arial,sans-serif;font-size:10pt;color:#000;line-height:1.4;',
+    summary:'font-family:Arial,sans-serif;font-size:10pt;color:#222;line-height:1.4;margin:2pt 0 0 0;',
+    expTitle:'font-family:Arial,sans-serif;font-size:10pt;font-weight:700;color:#000;margin:6pt 0 0 0;',
+    expDate:'font-family:Arial,sans-serif;font-size:9pt;color:#666;font-style:italic;margin:0 0 0 0;',
+    bullet:'font-family:Arial,sans-serif;font-size:10pt;color:#000;line-height:1.35;margin:0 0 0 0;',
+    skillLine:'font-family:Arial,sans-serif;font-size:10pt;color:#000;line-height:1.5;margin:2pt 0 0 0;',
+    eduDegree:'font-family:Arial,sans-serif;font-size:10pt;font-weight:700;color:#000;margin:3pt 0 0 0;',
+    eduDetail:'font-family:Arial,sans-serif;font-size:10pt;color:#333;margin:0 0 0 0;line-height:1.35;',
+    otherLine:'font-family:Arial,sans-serif;font-size:10pt;color:#000;margin:1pt 0 0 0;line-height:1.35;'
+  };
 
   var body='';
 
-  // NAME
-  body+='<p style="margin:0 0 3pt 0;font-size:16pt;font-weight:700;text-align:center;font-family:Arial,sans-serif;color:#000;letter-spacing:1pt;">'+e(d.name).toUpperCase()+'</p>';
+  // ─── NAME ──────────────────────────────────────────────
+  body+='<p style="'+S.name+'">'+e(d.name).toUpperCase()+'</p>';
 
-  // CONTACT
+  // ─── CONTACT ───────────────────────────────────────────
   if(d.contact.length>0)
-    body+='<p style="margin:0 0 10pt 0;font-size:9pt;text-align:center;color:#444;font-family:Arial,sans-serif;">'+e(d.contact.join('  |  '))+'</p>';
+    body+='<p style="'+S.contact+'">'+e(d.contact.join('  |  '))+'</p>';
 
-  // SUMMARY
+  // ─── PROFESSIONAL SUMMARY ─────────────────────────────
   if(d.summary){
-    body+='<p style="margin:12pt 0 3pt 0;font-size:10pt;font-weight:700;text-transform:uppercase;letter-spacing:0.8pt;border-bottom:1pt solid #000;padding-bottom:2pt;font-family:Arial,sans-serif;color:#000;">PROFESSIONAL SUMMARY</p>';
-    body+='<p style="margin:2pt 0 0 0;font-size:10pt;line-height:1.35;font-family:Arial,sans-serif;color:#000;">'+e(d.summary)+'</p>'
+    body+='<p style="'+S.sectionHeader+'">Professional Summary</p>';
+    // Split summary into sentences and wrap properly
+    var summarySentences=d.summary.split(/(?<=[.!?])\s+/);
+    var summaryHtml='';
+    for(var i=0;i<summarySentences.length;i++){
+      summaryHtml+=e(summarySentences[i]);
+      if(i<summarySentences.length-1)summaryHtml+=' ';
+    }
+    body+='<p style="'+S.summary+'">'+summaryHtml+'</p>';
   }
 
-  // SKILLS
+  // ─── SKILLS ────────────────────────────────────────────
   if(d.skills.length>0){
-    body+='<p style="margin:12pt 0 3pt 0;font-size:10pt;font-weight:700;text-transform:uppercase;letter-spacing:0.8pt;border-bottom:1pt solid #000;padding-bottom:2pt;font-family:Arial,sans-serif;color:#000;">SKILLS</p>';
+    body+='<p style="'+S.sectionHeader+'">Technical Skills</p>';
     var skillHtml='';
-    for(var i=0;i<d.skills.length;i++){if(i>0)skillHtml+='  •  ';skillHtml+=e(d.skills[i])}
-    body+='<p style="margin:2pt 0 0 0;font-size:10pt;line-height:1.5;font-family:Arial,sans-serif;color:#000;">'+skillHtml+'</p>'
+    for(var i=0;i<d.skills.length;i++){
+      if(i>0)skillHtml+=' &bull; ';
+      skillHtml+='<b>'+e(d.skills[i])+'</b>';
+    }
+    body+='<p style="'+S.skillLine+'">'+skillHtml+'</p>';
   }
 
-  // EXPERIENCE
+  // ─── EXPERIENCE ────────────────────────────────────────
   if(d.experience.length>0){
-    body+='<p style="margin:12pt 0 3pt 0;font-size:10pt;font-weight:700;text-transform:uppercase;letter-spacing:0.8pt;border-bottom:1pt solid #000;padding-bottom:2pt;font-family:Arial,sans-serif;color:#000;">EXPERIENCE</p>';
+    body+='<p style="'+S.sectionHeader+'">Professional Experience</p>';
     for(var i=0;i<d.experience.length;i++){
       var exp=d.experience[i];
-      body+='<p style="margin:4pt 0 1pt 0;font-size:10pt;font-weight:700;font-family:Arial,sans-serif;color:#000;">'+e(exp.role)+' &mdash; '+e(exp.org)+'</p>';
-      if(exp.date)body+='<p style="margin:0 0 1pt 0;font-size:9.5pt;font-style:italic;color:#555;font-family:Arial,sans-serif;">'+e(exp.date)+'</p>';
+      // Job title + Company
+      body+='<p style="'+S.expTitle+'">'+e(exp.role)+' &mdash; '+e(exp.org)+'</p>';
+      // Date
+      if(exp.date)body+='<p style="'+S.expDate+'">'+e(exp.date)+'</p>';
+      // Bullets using Word-compatible table layout
       for(var j=0;j<exp.bullets.length;j++){
-        var bulletText=e(exp.bullets[j]);
-        body+='<table cellpadding="0" cellspacing="0" border="0" style="margin:0 0 1pt 0;"><tr>';
-        body+='<td valign="top" width="10pt" style="font-size:10pt;line-height:1.35;font-family:Arial,sans-serif;color:#000;padding-right:6pt;">&#8226;</td>';
-        body+='<td valign="top" style="font-size:10pt;line-height:1.35;font-family:Arial,sans-serif;color:#000;">'+bulletText+'</td>';
-        body+='</tr></table>'
+        var bt=e(exp.bullets[j]);
+        // Word table for perfect bullet alignment
+        body+='<table cellpadding="0" cellspacing="0" border="0" style="margin:1pt 0;width:100%;">';
+        body+='<tr>';
+        body+='<td valign="top" width="16" style="font-family:Arial;font-size:10pt;color:#000;padding-right:6pt;">&bull;</td>';
+        body+='<td valign="top" style="font-family:Arial;font-size:10pt;color:#000;line-height:1.35;">'+bt+'</td>';
+        body+='</tr></table>';
       }
+      // Spacer between experience entries
+      if(i<d.experience.length-1)body+='<p style="margin:0;font-size:2pt;">&nbsp;</p>';
     }
   }
 
-  // EDUCATION
+  // ─── EDUCATION ─────────────────────────────────────────
   if(d.education.length>0){
-    body+='<p style="margin:12pt 0 3pt 0;font-size:10pt;font-weight:700;text-transform:uppercase;letter-spacing:0.8pt;border-bottom:1pt solid #000;padding-bottom:2pt;font-family:Arial,sans-serif;color:#000;">EDUCATION</p>';
+    body+='<p style="'+S.sectionHeader+'">Education</p>';
     for(var i=0;i<d.education.length;i++){
       if(d.education[i].type==='degree')
-        body+='<p style="margin:2pt 0 0 0;font-size:10pt;font-weight:700;font-family:Arial,sans-serif;color:#000;">'+e(d.education[i].text)+'</p>';
+        body+='<p style="'+S.eduDegree+'">'+e(d.education[i].text)+'</p>';
       else
-        body+='<p style="margin:0 0 0 0;font-size:10pt;color:#333;font-family:Arial,sans-serif;">'+e(d.education[i].text)+'</p>'
+        body+='<p style="'+S.eduDetail+'">'+e(d.education[i].text)+'</p>';
     }
   }
 
-  // ADDITIONAL
-  if(d.other.length>0&&(d.other.join(' ').match(/certif|project|award|honor|language|volunteer|publication/i))){
-    body+='<p style="margin:12pt 0 3pt 0;font-size:10pt;font-weight:700;text-transform:uppercase;letter-spacing:0.8pt;border-bottom:1pt solid #000;padding-bottom:2pt;font-family:Arial,sans-serif;color:#000;">ADDITIONAL</p>';
-    for(var i=0;i<Math.min(d.other.length,6);i++)
-      body+='<p style="margin:0 0 0 0;font-size:10pt;font-family:Arial,sans-serif;color:#000;">'+e(d.other[i])+'</p>'
+  // ─── PROJECTS ──────────────────────────────────────────
+  var projects=d.other.filter(function(x){return x.match(/^PROJECT:/)});
+  if(projects.length>0){
+    body+='<p style="'+S.sectionHeader+'">Projects</p>';
+    for(var i=0;i<Math.min(projects.length,5);i++){
+      var pText=projects[i].replace(/^PROJECT:\s*/,'');
+      body+='<table cellpadding="0" cellspacing="0" border="0" style="margin:1pt 0;width:100%;">';
+      body+='<tr>';
+      body+='<td valign="top" width="16" style="font-family:Arial;font-size:10pt;color:#000;padding-right:6pt;">&bull;</td>';
+      body+='<td valign="top" style="font-family:Arial;font-size:10pt;color:#000;line-height:1.35;">'+e(pText)+'</td>';
+      body+='</tr></table>';
+    }
   }
 
-  var h='<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="UTF-8"><title>Resume - '+e(d.name)+'</title></head><body style="font-family:Arial,sans-serif;font-size:10pt;color:#000;margin:50pt 60pt;">'+body+'</body></html>';
-  var b=new Blob([h],{type:'application/msword'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='resume-'+d.name.toLowerCase().replace(/\s+/g,'-')+'.doc';a.click();URL.revokeObjectURL(a.href)
+  // ─── CERTIFICATIONS / OTHER ────────────────────────────
+  var certs=d.other.filter(function(x){return x.match(/certif|license|award|honor|language|volunteer|publication/i)&&!x.match(/^PROJECT:/)});
+  if(certs.length>0){
+    body+='<p style="'+S.sectionHeader+'">Certifications & Awards</p>';
+    for(var i=0;i<Math.min(certs.length,5);i++){
+      body+='<table cellpadding="0" cellspacing="0" border="0" style="margin:1pt 0;width:100%;">';
+      body+='<tr>';
+      body+='<td valign="top" width="16" style="font-family:Arial;font-size:10pt;color:#000;padding-right:6pt;">&bull;</td>';
+      body+='<td valign="top" style="font-family:Arial;font-size:10pt;color:#000;line-height:1.35;">'+e(certs[i])+'</td>';
+      body+='</tr></table>';
+    }
+  }
+
+  // ─── WRAP IN WORD HTML ─────────────────────────────────
+  var h='<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">';
+  h+='<head><meta charset="UTF-8"><title>Resume - '+e(d.name)+'</title>';
+  h+='<!--[if gte mso 9]><xml><w:WordDocument><w:View>Print</w:View><w:Zoom>100</w:Zoom><w:DoNotOptimizeForBrowser/></w:WordDocument></xml><![endif]-->';
+  h+='</head>';
+  h+='<body style="font-family:Arial,sans-serif;font-size:10pt;color:#000;margin:50pt 60pt;">';
+  h+=body;
+  h+='</body></html>';
+
+  var b=new Blob([h],{type:'application/msword'}),a=document.createElement('a');
+  a.href=URL.createObjectURL(b);
+  a.download='resume-'+d.name.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')+'.doc';
+  a.click();
+  URL.revokeObjectURL(a.href);
 }
 function clearAll(){
   document.getElementById('resumeInput').value='';document.getElementById('jdInput').value='';
