@@ -86,7 +86,7 @@ textarea.letter-output{min-height:350px;font-family:Georgia,'Times New Roman',se
 .fixed-resume-output .resume-item-title{font-weight:700;font-size:10.5pt;color:#000}
 .fixed-resume-output .resume-item-meta{font-style:italic;font-size:10pt;color:#333}
 .fixed-resume-output .resume-item{margin-bottom:4px}
-.fixed-resume-output .resume-bullet{margin-left:16px;font-size:10pt;line-height:1.35}
+.fixed-resume-output .resume-bullet{margin-left:16px;font-size:10pt;line-height:1.35;text-indent:-8pt;padding-left:8pt}
 .fixed-resume-output .resume-summary{font-size:10pt;line-height:1.4;margin-bottom:4px}
 .fixed-resume-output .resume-skill-matched{background:#dbeafe;color:#1e40af;font-weight:600;padding:1px 4px;border-radius:2px}
 .fixed-resume-output .resume-skills-line{font-size:10pt;line-height:1.6}
@@ -401,10 +401,15 @@ function downloadDoc(eid,fn){
   var lines=t.split('\n'),body='';
   for(var i=0;i<lines.length;i++){
     var l=lines[i];
-    if(l.trim()==='')body+='<p style="margin:0;font-size:12pt;line-height:1.5;">&nbsp;</p>';
-    else body+='<p style="margin:0 0 2px 0;font-size:12pt;line-height:1.5;font-family:Georgia,\'Times New Roman\',serif;">'+escapeHtml(l)+'</p>'
+    if(l.trim()===''){body+='<p style="margin:0 0 6pt 0;font-size:12pt;line-height:1.5;">&nbsp;</p>';continue}
+    // Detect the separator line (———)
+    if(l.match(/^[—\-=]{5,}$/)){
+      body+='<p style="margin:2pt 0 2pt 0;font-size:1pt;line-height:1pt;border-top:1pt solid #666;">&nbsp;</p>';
+      continue
+    }
+    body+='<p style="margin:0 0 3pt 0;font-size:12pt;line-height:1.5;font-family:Georgia,\'Times New Roman\',serif;">'+escapeHtml(l)+'</p>'
   }
-  var h='<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="UTF-8"><title>Cover Letter</title></head><body style="font-family:Georgia,\'Times New Roman\',serif;font-size:12pt;color:#000;margin:40px 60px;">'+body+'</body></html>';
+  var h='<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="UTF-8"><title>Cover Letter</title></head><body style="font-family:Georgia,\'Times New Roman\',serif;font-size:12pt;color:#000;margin:40px 72px;line-height:1.5;">'+body+'</body></html>';
   var b=new Blob([h],{type:'application/msword'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=fn;a.click();URL.revokeObjectURL(a.href)
 }
 function esc(t){return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
@@ -642,8 +647,13 @@ function downloadResumeDoc(){
       var exp=d.experience[i];
       body+='<p style="margin:4pt 0 1pt 0;font-size:10pt;font-weight:700;font-family:Arial,sans-serif;color:#000;">'+e(exp.role)+' &mdash; '+e(exp.org)+'</p>';
       if(exp.date)body+='<p style="margin:0 0 1pt 0;font-size:9.5pt;font-style:italic;color:#555;font-family:Arial,sans-serif;">'+e(exp.date)+'</p>';
-      for(var j=0;j<exp.bullets.length;j++)
-        body+='<p style="margin:0 0 1pt 18pt;font-size:10pt;line-height:1.35;font-family:Arial,sans-serif;color:#000;text-indent:-9pt;">&bull;&nbsp;'+e(exp.bullets[j])+'</p>'
+      for(var j=0;j<exp.bullets.length;j++){
+        var bulletText=e(exp.bullets[j]);
+        body+='<table cellpadding="0" cellspacing="0" border="0" style="margin:0 0 1pt 0;"><tr>';
+        body+='<td valign="top" width="10pt" style="font-size:10pt;line-height:1.35;font-family:Arial,sans-serif;color:#000;padding-right:6pt;">&#8226;</td>';
+        body+='<td valign="top" style="font-size:10pt;line-height:1.35;font-family:Arial,sans-serif;color:#000;">'+bulletText+'</td>';
+        body+='</tr></table>'
+      }
     }
   }
 
