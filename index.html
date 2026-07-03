@@ -420,60 +420,53 @@ function highlightKW(text,keywords){
 }
 function parseResumeSections(txt){
   var sec={contact:[],summary:'',experience:[],education:[],skills:[],other:[]};
-
-  // Normalize
   var raw=txt.replace(/\r\n/g,'\n').replace(/\r/g,'\n');
-
-  // ─── SPLIT ON SECTION HEADERS (even if embedded) ─────────
   var headerWords=['CAREER OBJECTIVE','PROFESSIONAL SUMMARY','SUMMARY','PROFILE','OBJECTIVE','ABOUT ME',
-    'TECHNICAL SKILLS','SKILLS','CORE COMPETENCIES','EXPERTISE','TECHNOLOGIES',
+    'TECHNICAL SKILLS','SKILLS','CORE COMPETENCIES','EXPERTISE','TECHNOLOGIES','TECHNICAL PROFICIENCY',
     'WORK EXPERIENCE','EXPERIENCE','EMPLOYMENT HISTORY','PROFESSIONAL EXPERIENCE','PROFESSIONAL BACKGROUND',
-    'EDUCATION','ACADEMIC BACKGROUND','QUALIFICATIONS',
-    'PROJECTS','PROJECT EXPERIENCE','PORTFOLIO',
-    'CERTIFICATIONS','CERTIFICATES','LICENSES','AWARDS','HONORS','LANGUAGES','INTERESTS','VOLUNTEER','PUBLICATIONS','REFERENCES','ACTIVITIES'];
+    'EDUCATION','ACADEMIC BACKGROUND','QUALIFICATIONS','EDUCATIONAL BACKGROUND',
+    'PROJECTS','PROJECT EXPERIENCE','PORTFOLIO','KEY PROJECTS',
+    'CERTIFICATIONS','CERTIFICATES','LICENSES','AWARDS','HONORS','LANGUAGES','INTERESTS','VOLUNTEER','PUBLICATIONS','REFERENCES','ACTIVITIES','OTHER'];
+  var sectionRegex=/^(CAREER OBJECTIVE|PROFESSIONAL SUMMARY|SUMMARY|PROFILE|OBJECTIVE|ABOUT ME|TECHNICAL SKILLS|SKILLS|CORE COMPETENCIES|EXPERTISE|TECHNOLOGIES|TECHNICAL PROFICIENCY|WORK EXPERIENCE|EXPERIENCE|EMPLOYMENT HISTORY|PROFESSIONAL EXPERIENCE|PROFESSIONAL BACKGROUND|EDUCATION|ACADEMIC BACKGROUND|QUALIFICATIONS|EDUCATIONAL BACKGROUND|PROJECTS|PROJECT EXPERIENCE|PORTFOLIO|KEY PROJECTS|CERTIFICATIONS|CERTIFICATES|LICENSES|AWARDS|HONORS|LANGUAGES|INTERESTS|VOLUNTEER|PUBLICATIONS|REFERENCES|ACTIVITIES|OTHER)/i;
+
   for(var i=0;i<headerWords.length;i++){
-    raw=raw.replace(new RegExp('('+headerWords[i]+')','gi'),'\n$1\n');
+    raw=raw.replace(new RegExp('\\b('+headerWords[i]+')\\s*','gi'),'\n$1\n');
   }
+  raw=raw.replace(/[•·]\s*/g,'\n• ');
+  raw=raw.replace(/\s*\|\s*/g,'\n');
   raw=raw.replace(/\n{3,}/g,'\n\n').replace(/^\s+/,'');
   var lines=raw.split('\n').map(function(l){return l.trim()}).filter(function(l){return l.length>0});
 
-  // ─── PHASE 1: Extract contact from the first few lines ──
-  var contactDone=false;
-  var sectionRegex=/^(CAREER OBJECTIVE|PROFESSIONAL SUMMARY|SUMMARY|PROFILE|OBJECTIVE|ABOUT ME|TECHNICAL SKILLS|SKILLS|CORE COMPETENCIES|EXPERTISE|TECHNOLOGIES|WORK EXPERIENCE|EXPERIENCE|EMPLOYMENT HISTORY|PROFESSIONAL EXPERIENCE|PROFESSIONAL BACKGROUND|EDUCATION|ACADEMIC BACKGROUND|QUALIFICATIONS|PROJECTS|PROJECT EXPERIENCE|PORTFOLIO|CERTIFICATIONS|CERTIFICATES|LICENSES|AWARDS|HONORS|LANGUAGES|INTERESTS|VOLUNTEER|PUBLICATIONS|REFERENCES|ACTIVITIES)/i;
+  var firstSectionIdx=lines.length;
+  for(var i=0;i<lines.length;i++){
+    if(sectionRegex.test(lines[i])){firstSectionIdx=i;break}
+  }
 
-  // Split first line on common separators: · | / — -  to find contact parts
   var contactLine='';
-  for(var i=0;i<Math.min(3,lines.length);i++){
-    if(sectionRegex.test(lines[i]))break;
+  for(var i=0;i<firstSectionIdx;i++){
     contactLine+=' '+lines[i];
   }
   contactLine=contactLine.trim();
 
-  // Extract email anywhere
   var emailMatch=contactLine.match(/[\w.-]+@[\w.-]+\.\w+/);
   if(emailMatch)sec.contact.push({type:'email',value:emailMatch[0]});
 
-  // Extract phone anywhere
   var phoneMatch=contactLine.match(/\(?\d{3}\)?[\s.-]?\d{3,4}[\s.-]?\d{3,4}/);
   if(phoneMatch)sec.contact.push({type:'phone',value:phoneMatch[0]});
 
-  // Extract links
   var linkMatches=contactLine.match(/(linkedin\.com\/\S+|github\.com\/\S+)/gi);
   if(linkMatches){for(var i=0;i<linkMatches.length;i++)sec.contact.push({type:'link',value:linkMatches[i]})}
 
-  // Extract name: first ALL CAPS block (2-5 words, no numbers/symbols)
   var nameFound=false;
   var nameRegex=/([A-Z][A-Z.'\-]+(?:\s+[A-Z][A-Z.'\-]+){1,4})/g;
   var nameMatch=nameRegex.exec(contactLine);
   if(nameMatch){
     var candidate=nameMatch[1];
-    // Make sure it's not a section header or contains tech words
     if(!candidate.match(/(ENGINEER|DEVELOPER|MANAGER|DIRECTOR|ANALYST|DESIGNER|CONSULTANT|SPECIALIST|SKILLS|EXPERIENCE|EDUCATION|PROJECTS|GRADUATE)/)){
       sec.contact.push({type:'name',value:candidate});nameFound=true;
     }
   }
   if(!nameFound){
-    // Fallback: first line that looks like a name
     for(var i=0;i<Math.min(3,lines.length);i++){
       if(sectionRegex.test(lines[i]))break;
       var l=lines[i].replace(/[^A-Z\s.]/g,'').trim();
@@ -484,40 +477,71 @@ function parseResumeSections(txt){
   }
   if(!nameFound)sec.contact.push({type:'name',value:'YOUR NAME'});
 
-  // ─── PHASE 2: Process sections ──────────────────────────
-  var firstSectionIdx=0;
-  for(var i=0;i<lines.length;i++){
-    if(sectionRegex.test(lines[i])){firstSectionIdx=i;break}
-  }
-
   var cur='other';
   for(var i=firstSectionIdx;i<lines.length;i++){
     var l=lines[i];
     if(sectionRegex.test(l)){
-      cur=l.toUpperCase();
+      cur=l.toUpperCase().trim();
       continue
     }
-    // Route to correct section
-    if(cur.match(/SUMMARY|PROFILE|OBJECTIVE|ABOUT|CAREER/i))sec.summary+=(sec.summary?' ':'')+l;
-    else if(cur.match(/^SKILL|^TECH|^CORE|^COMPETENC|^EXPERT|^TECHNOLOG/i))sec.skills.push(l);
-    else if(cur.match(/^EXPER|^WORK|^EMPLOY|^PROFESSIONAL EXP/i))sec.experience.push(l);
-    else if(cur.match(/^EDUC|^ACADEMIC|^QUALIF/i))sec.education.push(l);
-    else if(cur.match(/^PROJECT|^PORTFOLIO/i))sec.other.push('PROJECT: '+l);
-    else sec.other.push(l)
+    if(cur.match(/SUMMARY|PROFILE|OBJECTIVE|ABOUT|CAREER/i)){
+      sec.summary+=(sec.summary?' ':l)
+    }
+    else if(cur.match(/^SKILL|^TECH|^CORE|^COMPETENC|^EXPERT|^TECHNOLOG/i)){
+      var skillParts=l.split(/[•·,;|\/]/);
+      for(var j=0;j<skillParts.length;j++){
+        var s=skillParts[j].trim();
+        if(s.length>1 && s.length<80)sec.skills.push(s);
+      }
+    }
+    else if(cur.match(/^EXPER|^WORK|^EMPLOY|^PROFESSIONAL EXP/i)){
+      sec.experience.push(l);
+    }
+    else if(cur.match(/^EDUC|^ACADEMIC|^QUALIF/i)){
+      sec.education.push(l);
+    }
+    else if(cur.match(/^PROJECT|^PORTFOLIO/i)){
+      sec.other.push('PROJECT: '+l);
+    }
+    else if(cur.match(/^CERTIF|^LICENSE|^AWARD|^HONOR|^LANGUAGE|^VOLUNTEER|^PUBLICATION/i)){
+      sec.other.push(l);
+    }
+    else{
+      sec.other.push(l);
+    }
   }
-
   return sec
 }
+
 function parseExpBlocks(lines){
   var blocks=[],cur=null;
   for(var i=0;i<lines.length;i++){
-    var l=lines[i].trim(),m=l.match(/^(.+?)\s+(?:at|@|�|-)\s+(.+?)(?:\s*[(\[]|$)/);
-    if(m){if(cur)blocks.push(cur);cur={role:m[1].trim(),org:m[2].trim(),date:'',bullets:[]};var rest=l.substring(m[0].length).trim();if(rest.match(/[\d]{4}/))cur.date=rest}
-    else if(cur&&l.match(/^[\s\-�*�\d.]/))cur.bullets.push(l.replace(/^[\s\-�*�\d.]+\s*/,''));
-    else if(cur&&l.match(/[\d]{4}|present|current/i)&&l.length<40)cur.date=(cur.date?cur.date+' ':'')+l;
-    else if(cur&&l.length>5)cur.bullets.push(l)
+    var l=lines[i].trim();
+    if(l.match(/^[•·\-\*]$/))continue;
+    var m=l.match(/^(.+?)\s+(?:at|@|—|-)\s+(.+?)(?:\s*[(\[]|$)/i);
+    if(!m)m=l.match(/^(.+?)\s*[|]\s*(.+?)(?:\s*[(\[]|$)/);
+    if(!m)m=l.match(/^(.+?)\s*[-–]\s+(.+?)(?:\s*[(\[]|$)/);
+    if(m){
+      if(cur)blocks.push(cur);
+      cur={role:m[1].trim(),org:m[2].trim(),date:'',bullets:[]};
+      var rest=l.substring(m[0].length).trim();
+      if(rest.match(/\d{4}/))cur.date=rest;
+    }
+    else if(cur){
+      if(l.match(/^[•·\-\*]\s*/)){
+        var bulletText=l.replace(/^[•·\-\*]\s*/,'').trim();
+        if(bulletText.length>5)cur.bullets.push(bulletText);
+      }
+      else if(l.match(/\d{4}\s*[-–—]\s*(Present|Current|\d{4})/i)&&l.length<60){
+        cur.date=(cur.date?cur.date+' | ':'')+l;
+      }
+      else if(l.length>5){
+        cur.bullets.push(l);
+      }
+    }
   }
-  if(cur)blocks.push(cur);return blocks
+  if(cur)blocks.push(cur);
+  return blocks
 }
 var _resumeData=null;
 
@@ -619,18 +643,17 @@ function downloadResumeDoc(){
 
   // Word-compatible styles
   var S={
-    name:'font-family:Arial,sans-serif;font-size:16pt;font-weight:700;text-align:center;color:#000;margin:0 0 2pt 0;letter-spacing:0.5pt;',
-    contact:'font-family:Arial,sans-serif;font-size:9pt;text-align:center;color:#555;margin:0 0 8pt 0;',
-    sectionHeader:'font-family:Arial,sans-serif;font-size:10.5pt;font-weight:700;text-transform:uppercase;letter-spacing:0.5pt;color:#000;margin:10pt 0 2pt 0;border-bottom:1pt solid #333;padding-bottom:2pt;',
-    body:'font-family:Arial,sans-serif;font-size:10pt;color:#000;line-height:1.4;',
-    summary:'font-family:Arial,sans-serif;font-size:10pt;color:#222;line-height:1.4;margin:2pt 0 0 0;',
-    expTitle:'font-family:Arial,sans-serif;font-size:10pt;font-weight:700;color:#000;margin:6pt 0 0 0;',
-    expDate:'font-family:Arial,sans-serif;font-size:9pt;color:#666;font-style:italic;margin:0 0 0 0;',
-    bullet:'font-family:Arial,sans-serif;font-size:10pt;color:#000;line-height:1.35;margin:0 0 0 0;',
+    name:'font-family:Arial,sans-serif;font-size:16pt;font-weight:700;text-align:center;color:#000;margin:0 0 3pt 0;letter-spacing:0.5pt;',
+    contact:'font-family:Arial,sans-serif;font-size:9.5pt;text-align:center;color:#444;margin:0 0 10pt 0;line-height:1.3;',
+    sectionHeader:'font-family:Arial,sans-serif;font-size:11pt;font-weight:700;text-transform:uppercase;letter-spacing:0.5pt;color:#000;margin:12pt 0 3pt 0;padding-bottom:2pt;border-bottom:1.5pt solid #222;',
+    summary:'font-family:Arial,sans-serif;font-size:10pt;color:#111;line-height:1.45;margin:2pt 0 0 0;',
+    expTitle:'font-family:Arial,sans-serif;font-size:10pt;font-weight:700;color:#000;margin:8pt 0 1pt 0;',
+    expDate:'font-family:Arial,sans-serif;font-size:9pt;color:#555;font-style:italic;margin:0 0 1pt 0;',
+    bullet:'font-family:Arial,sans-serif;font-size:10pt;color:#000;line-height:1.4;margin:0 0 1pt 0;',
     skillLine:'font-family:Arial,sans-serif;font-size:10pt;color:#000;line-height:1.5;margin:2pt 0 0 0;',
-    eduDegree:'font-family:Arial,sans-serif;font-size:10pt;font-weight:700;color:#000;margin:3pt 0 0 0;',
-    eduDetail:'font-family:Arial,sans-serif;font-size:10pt;color:#333;margin:0 0 0 0;line-height:1.35;',
-    otherLine:'font-family:Arial,sans-serif;font-size:10pt;color:#000;margin:1pt 0 0 0;line-height:1.35;'
+    eduDegree:'font-family:Arial,sans-serif;font-size:10pt;font-weight:700;color:#000;margin:5pt 0 1pt 0;',
+    eduDetail:'font-family:Arial,sans-serif;font-size:10pt;color:#222;margin:0 0 2pt 0;line-height:1.4;',
+    otherLine:'font-family:Arial,sans-serif;font-size:10pt;color:#000;margin:2pt 0 0 0;line-height:1.4;'
   };
 
   var body='';
@@ -645,7 +668,6 @@ function downloadResumeDoc(){
   // ─── PROFESSIONAL SUMMARY ─────────────────────────────
   if(d.summary){
     body+='<p style="'+S.sectionHeader+'">Professional Summary</p>';
-    // Split summary into sentences and wrap properly
     var summarySentences=d.summary.split(/(?<=[.!?])\s+/);
     var summaryHtml='';
     for(var i=0;i<summarySentences.length;i++){
@@ -661,7 +683,7 @@ function downloadResumeDoc(){
     var skillHtml='';
     for(var i=0;i<d.skills.length;i++){
       if(i>0)skillHtml+=' &bull; ';
-      skillHtml+='<b>'+e(d.skills[i])+'</b>';
+      skillHtml+=e(d.skills[i]);
     }
     body+='<p style="'+S.skillLine+'">'+skillHtml+'</p>';
   }
@@ -671,22 +693,17 @@ function downloadResumeDoc(){
     body+='<p style="'+S.sectionHeader+'">Professional Experience</p>';
     for(var i=0;i<d.experience.length;i++){
       var exp=d.experience[i];
-      // Job title + Company
       body+='<p style="'+S.expTitle+'">'+e(exp.role)+' &mdash; '+e(exp.org)+'</p>';
-      // Date
       if(exp.date)body+='<p style="'+S.expDate+'">'+e(exp.date)+'</p>';
-      // Bullets using Word-compatible table layout
       for(var j=0;j<exp.bullets.length;j++){
         var bt=e(exp.bullets[j]);
-        // Word table for perfect bullet alignment
-        body+='<table cellpadding="0" cellspacing="0" border="0" style="margin:1pt 0;width:100%;">';
+        body+='<table cellpadding="0" cellspacing="0" border="0" style="margin:0 0 2pt 0;width:100%;">';
         body+='<tr>';
-        body+='<td valign="top" width="16" style="font-family:Arial;font-size:10pt;color:#000;padding-right:6pt;">&bull;</td>';
-        body+='<td valign="top" style="font-family:Arial;font-size:10pt;color:#000;line-height:1.35;">'+bt+'</td>';
+        body+='<td valign="top" width="18" style="font-family:Arial;font-size:10pt;color:#000;padding-right:6pt;padding-top:1pt;">&#8226;</td>';
+        body+='<td valign="top" style="font-family:Arial;font-size:10pt;color:#000;line-height:1.4;">'+bt+'</td>';
         body+='</tr></table>';
       }
-      // Spacer between experience entries
-      if(i<d.experience.length-1)body+='<p style="margin:0;font-size:2pt;">&nbsp;</p>';
+      if(i<d.experience.length-1)body+='<p style="margin:0;font-size:3pt;">&nbsp;</p>';
     }
   }
 
@@ -707,10 +724,10 @@ function downloadResumeDoc(){
     body+='<p style="'+S.sectionHeader+'">Projects</p>';
     for(var i=0;i<Math.min(projects.length,5);i++){
       var pText=projects[i].replace(/^PROJECT:\s*/,'');
-      body+='<table cellpadding="0" cellspacing="0" border="0" style="margin:1pt 0;width:100%;">';
+      body+='<table cellpadding="0" cellspacing="0" border="0" style="margin:0 0 2pt 0;width:100%;">';
       body+='<tr>';
-      body+='<td valign="top" width="16" style="font-family:Arial;font-size:10pt;color:#000;padding-right:6pt;">&bull;</td>';
-      body+='<td valign="top" style="font-family:Arial;font-size:10pt;color:#000;line-height:1.35;">'+e(pText)+'</td>';
+      body+='<td valign="top" width="18" style="font-family:Arial;font-size:10pt;color:#000;padding-right:6pt;padding-top:1pt;">&#8226;</td>';
+      body+='<td valign="top" style="font-family:Arial;font-size:10pt;color:#000;line-height:1.4;">'+e(pText)+'</td>';
       body+='</tr></table>';
     }
   }
@@ -720,10 +737,10 @@ function downloadResumeDoc(){
   if(certs.length>0){
     body+='<p style="'+S.sectionHeader+'">Certifications & Awards</p>';
     for(var i=0;i<Math.min(certs.length,5);i++){
-      body+='<table cellpadding="0" cellspacing="0" border="0" style="margin:1pt 0;width:100%;">';
+      body+='<table cellpadding="0" cellspacing="0" border="0" style="margin:0 0 2pt 0;width:100%;">';
       body+='<tr>';
-      body+='<td valign="top" width="16" style="font-family:Arial;font-size:10pt;color:#000;padding-right:6pt;">&bull;</td>';
-      body+='<td valign="top" style="font-family:Arial;font-size:10pt;color:#000;line-height:1.35;">'+e(certs[i])+'</td>';
+      body+='<td valign="top" width="18" style="font-family:Arial;font-size:10pt;color:#000;padding-right:6pt;padding-top:1pt;">&#8226;</td>';
+      body+='<td valign="top" style="font-family:Arial;font-size:10pt;color:#000;line-height:1.4;">'+e(certs[i])+'</td>';
       body+='</tr></table>';
     }
   }
@@ -733,7 +750,7 @@ function downloadResumeDoc(){
   h+='<head><meta charset="UTF-8"><title>Resume - '+e(d.name)+'</title>';
   h+='<!--[if gte mso 9]><xml><w:WordDocument><w:View>Print</w:View><w:Zoom>100</w:Zoom><w:DoNotOptimizeForBrowser/></w:WordDocument></xml><![endif]-->';
   h+='</head>';
-  h+='<body style="font-family:Arial,sans-serif;font-size:10pt;color:#000;margin:50pt 60pt;">';
+  h+='<body style="font-family:Arial,sans-serif;font-size:10pt;color:#000;margin:0.6in 0.7in;">';
   h+=body;
   h+='</body></html>';
 
