@@ -305,6 +305,14 @@ textarea.jd-input{min-height:180px}
             <option value="creative">Creative</option>
             <option value="technical">Technical</option>
           </select>
+          <select class="template-select" id="clContentSelect" onchange="changeClContent()">
+            <option value="professional">Professional</option>
+            <option value="enthusiastic">Enthusiastic</option>
+            <option value="concise">Concise</option>
+            <option value="storytelling">Storytelling</option>
+            <option value="confident">Confident</option>
+            <option value="formal">Formal</option>
+          </select>
           <button class="btn btn-secondary btn-sm" onclick="toggleClPreviewDark()">Dark Preview</button>
           <div class="undo-redo">
             <button class="btn btn-secondary btn-sm" onclick="undoCl()" id="clUndoBtn" disabled>Undo</button>
@@ -767,6 +775,76 @@ function extractResumeSkills(t){
   var s=new Set(),u=[];for(var i=0;i<found.length;i++){var lc=found[i].toLowerCase();if(!s.has(lc)){s.add(lc);u.push(found[i])}}return u
 }
 var _clData=null,_clUndoStack=[],_clRedoStack=[];
+function buildClParas(info,matched,exp,company,style){
+  var p=[];
+  if(style==='enthusiastic'){
+    p.push('Dear Hiring Manager,');
+    var p1="I'm thrilled to apply for the "+info.title+" role at "+info.company+"! ";
+    if(exp.length>0)p1+="During my time as "+exp[0].role+" at "+exp[0].org+", I honed skills that are directly applicable here. "+(exp[0].achievements.length>0?"One highlight: "+exp[0].achievements[0].charAt(0).toLowerCase()+exp[0].achievements[0].slice(1)+". ":"");
+    else p1+="I bring a unique combination of skills and passion that makes me an excellent fit. ";
+    p.push(p1);
+    var p2='';if(matched.length>0)p2="I'm especially excited about my expertise in "+matched.slice(0,4).join(', ')+" and how it aligns with your needs. ";
+    p2+="I can't wait to bring my energy and skills to "+company+" and make a real impact!";
+    p.push(p2);
+    p.push("Thank you for your time and consideration. I'd love the chance to discuss how I can contribute to "+company+"'s exciting future!");
+  }else if(style==='concise'){
+    p.push('Dear Hiring Manager,');
+    var p1="I'm applying for the "+info.title+" position at "+info.company+". ";
+    if(exp.length>0)p1+="As "+exp[0].role+" at "+exp[0].org+", I built relevant expertise. ";
+    else p1+="My background aligns well with this role. ";
+    p.push(p1);
+    var p2='';if(matched.length>0)p2="Key skills: "+matched.slice(0,4).join(', ')+". ";
+    p2+="I'm ready to contribute from day one.";
+    p.push(p2);
+    p.push("Looking forward to discussing this opportunity further.");
+  }else if(style==='storytelling'){
+    p.push('Dear Hiring Manager,');
+    var p1='';
+    if(exp.length>0){
+      p1="When I first joined "+exp[0].org+" as "+exp[0].role+", I quickly discovered a passion for solving complex challenges. ";
+      if(exp[0].achievements.length>0)p1+="One project that defined my growth: "+exp[0].achievements[0].charAt(0).toLowerCase()+exp[0].achievements[0].slice(1)+". ";
+    }else{
+      p1="Every career has a defining moment. Mine came when I realized how much impact the right team can have. ";
+    }
+    p1+="That journey has led me here, to the "+info.title+" opportunity at "+info.company+".";
+    p.push(p1);
+    var p2="Throughout my career, I've developed a strong foundation in "+(matched.length>0?matched.slice(0,4).join(', '):'my field')+". But what sets me apart isn't just technical skill — it's the curiosity and drive I bring to every project. ";
+    p2+="I'm excited about the possibility of writing the next chapter of my career at "+company+".";
+    p.push(p2);
+    p.push("Thank you for considering my application. I'd be honored to share more about my story and how it aligns with your vision for this role.");
+  }else if(style==='confident'){
+    p.push('Dear Hiring Manager,');
+    var p1="I am the right candidate for the "+info.title+" position at "+info.company+". ";
+    if(exp.length>0)p1+="My track record as "+exp[0].role+" at "+exp[0].org+" speaks for itself. "+(exp[0].achievements.length>0?"For instance, "+exp[0].achievements[0].charAt(0).toLowerCase()+exp[0].achievements[0].slice(1)+". ":"");
+    else p1+="I have consistently delivered results throughout my career. ";
+    p.push(p1);
+    var p2='';if(matched.length>0)p2="With proven expertise in "+matched.slice(0,4).join(', ')+", I bring exactly what you need. ";
+    p2+="I am confident I will make an immediate and measurable impact at "+company+".";
+    p.push(p2);
+    p.push("I welcome the opportunity to demonstrate my value in person. Let's schedule a conversation.");
+  }else if(style==='formal'){
+    p.push('Dear Hiring Manager,');
+    var p1="I wish to express my interest in the "+info.title+" position at "+info.company+". ";
+    if(exp.length>0)p1+="In my previous capacity as "+exp[0].role+" at "+exp[0].org+", I acquired competencies that are directly relevant to this opportunity. ";
+    else p1+="My professional background has equipped me with the qualifications necessary for this role. ";
+    p.push(p1);
+    var p2='';if(matched.length>0)p2="My proficiency in "+matched.slice(0,4).join(', ')+" aligns closely with the requirements outlined in your posting. ";
+    p2+="I am eager to contribute my expertise to the continued success of "+company+".";
+    p.push(p2);
+    p.push("Thank you for your time and consideration. I look forward to the possibility of discussing my qualifications at your earliest convenience.");
+  }else{
+    p.push('Dear Hiring Manager,');
+    var p1="I am writing to express my strong interest in the "+info.title+" position at "+info.company+". ";
+    if(exp.length>0)p1+="In my role as "+exp[0].role+" at "+exp[0].org+", I developed expertise that directly aligns with this opportunity. "+(exp[0].achievements.length>0?"For example, "+exp[0].achievements[0].charAt(0).toLowerCase()+exp[0].achievements[0].slice(1)+". ":"");
+    else p1+="I am confident that my background and enthusiasm make me a strong candidate for this role. ";
+    p.push(p1);
+    var p2='';if(matched.length>0)p2="My experience with "+matched.slice(0,4).join(', ')+" matches your requirements. ";
+    p2+="I am eager to bring this skillset to "+company+" and contribute to your team's success.";
+    p.push(p2);
+    p.push("Thank you for considering my application. I look forward to the opportunity to speak with you about how I can contribute to "+company+".");
+  }
+  return p;
+}
 function generateCoverLetter(){
   var jd=document.getElementById('jdInput').value.trim(),resume=document.getElementById('resumeInput').value.trim();
   var name=document.getElementById('userName').value.trim()||'Applicant',email=document.getElementById('userEmailInput').value.trim(),phone=document.getElementById('userPhone').value.trim(),link=document.getElementById('userLink').value.trim();
@@ -785,17 +863,8 @@ function generateCoverLetter(){
   }
   var matched=jdSkills.filter(function(s){return resumeSkills.some(function(rs){return rs.toLowerCase().includes(s.toLowerCase())||s.toLowerCase().includes(rs.toLowerCase())})});
   var d=new Date(),dateStr=d.toLocaleString('en-US',{month:'long'})+' '+d.getDate()+', '+d.getFullYear();
-  var paras=[];
-  paras.push('Dear Hiring Manager,');
-  var p1='I am writing to express my strong interest in the '+info.title+' position at '+info.company+'. ';
-  if(resume&&exp.length>0){p1+='In my role as '+exp[0].role+' at '+exp[0].org+', I developed expertise that directly aligns with this opportunity. ';if(exp[0].achievements.length>0)p1+='For example, '+exp[0].achievements[0].charAt(0).toLowerCase()+exp[0].achievements[0].slice(1)+'.'}
-  else{p1+='I am confident that my background and enthusiasm make me a strong candidate for this role.'}
-  paras.push(p1);
-  var p2='';
-  if(matched.length>0)p2='My experience with '+matched.slice(0,4).join(', ')+' matches your requirements. ';
-  p2+="I am eager to bring this skillset to "+info.company+" and contribute to your team's success.";
-  paras.push(p2);
-  paras.push('Thank you for considering my application. I look forward to the opportunity to speak with you about how I can contribute to '+info.company+'.');
+  var style=document.getElementById('clContentSelect').value;
+  var paras=buildClParas(info,matched,exp,info.company,style);
   _clData={name:name,email:email,phone:phone,link:link,date:dateStr,paragraphs:paras,company:info.company,title:info.title,matched:matched};
   _clUndoStack=[];_clRedoStack=[];
   renderClPreview();
@@ -835,6 +904,11 @@ function clGetText(){
   return t;
 }
 function changeClTemplate(){if(_clData){pushClUndo();renderClPreview()}}
+function changeClContent(){if(_clData){pushClUndo();
+  var style=document.getElementById('clContentSelect').value;
+  var info={title:_clData.title,company:_clData.company};
+  _clData.paragraphs=buildClParas(info,_clData.matched,[],_clData.company,style);
+  renderClPreview()}}
 function toggleClPreviewDark(){document.getElementById('letterOutput').classList.toggle('dark-preview')}
 function pushClUndo(){if(_clData){_clUndoStack.push(JSON.stringify(_clData));if(_clUndoStack.length>20)_clUndoStack.shift();_clRedoStack=[];updateClUndoRedoBtns()}}
 function undoCl(){if(_clUndoStack.length===0)return;_clRedoStack.push(JSON.stringify(_clData));_clData=JSON.parse(_clUndoStack.pop());renderClPreview();updateClUndoRedoBtns();showToast('Undone.','success')}
