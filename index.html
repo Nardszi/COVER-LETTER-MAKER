@@ -190,7 +190,29 @@ textarea.letter-output{min-height:350px;font-family:var(--font-display);font-siz
   .card{padding:12px}
   .btn{padding:6px 12px;font-size:.8rem}
   .gen-area .btn{padding:10px 14px;font-size:.85rem}
+  .rf-info-section{padding:16px}
+  .rf-info-grid{grid-template-columns:1fr}
+  .rf-info-features{grid-template-columns:1fr}
 }
+.rf-info-section{margin-top:24px;background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:28px 32px}
+.rf-info-section h3{font-family:var(--font-display);font-size:1.3rem;margin-bottom:20px;color:var(--text-bright)}
+.rf-info-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin-bottom:24px}
+.rf-info-card{display:flex;gap:14px;align-items:flex-start;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:16px;transition:all .2s}
+.rf-info-card:hover{border-color:var(--accent);transform:translateY(-1px)}
+.rf-info-icon{width:32px;height:32px;min-width:32px;background:var(--accent);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.85rem}
+.rf-info-card strong{display:block;font-size:.9rem;margin-bottom:4px;color:var(--text-bright)}
+.rf-info-card p{font-size:.8rem;color:var(--text-dim);line-height:1.5;margin:0}
+.rf-info-features{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px}
+.rf-feature{text-align:center;padding:18px 12px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);transition:all .2s}
+.rf-feature:hover{border-color:var(--accent)}
+.rf-feature-icon{display:inline-block;background:var(--accent-glow);color:var(--accent);padding:4px 10px;border-radius:999px;font-size:.7rem;font-weight:700;letter-spacing:.5px;margin-bottom:8px}
+.rf-feature span:nth-child(2){display:block;font-size:.85rem;font-weight:600;margin-bottom:6px;color:var(--text-bright)}
+.rf-feature p{font-size:.75rem;color:var(--text-dim);line-height:1.5;margin:0}
+.rf-info-tip{display:flex;align-items:center;gap:8px;padding:14px 18px;background:rgba(99,102,241,.06);border:1px solid rgba(99,102,241,.15);border-radius:var(--radius-sm);font-size:.85rem;color:var(--text)}
+.rf-info-tip strong{color:var(--accent)}
+.hl-blue{background:#dbeafe;color:#1e40af;padding:1px 4px;border-radius:2px}
+@media(max-width:900px){.rf-info-grid{grid-template-columns:1fr}.rf-info-features{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:600px){.rf-info-features{grid-template-columns:1fr}.rf-info-tip{flex-direction:column;text-align:center}}
 </style>
 </head>
 <body>
@@ -281,17 +303,6 @@ textarea.letter-output{min-height:350px;font-family:var(--font-display);font-siz
           <button class="btn btn-primary" onclick="fixResume()">?? Fix My Resume</button>
           <button class="btn btn-secondary" onclick="clearResumeFixer()">Clear All</button>
         </div>
-        <div style="font-size:.8rem;color:var(--text-dim);margin-top:12px;">
-          <strong>What this does:</strong>
-          <ul style="margin:8px 0 0 18px;line-height:1.6;">
-            <li>Reformats your resume into a clean ATS-friendly layout</li>
-            <li>Matches skills to keywords from the job description</li>
-            <li>Highlights matched keywords in <span style="background:#dbeafe;color:#1e40af;padding:1px 4px;border-radius:2px;">blue</span></li>
-            <li>Groups skills by category (Languages, Frameworks, etc.)</li>
-            <li>Download as .doc or .pdf</li>
-          </ul>
-          <button class="btn btn-secondary btn-sm" style="margin-top:8px" onclick="toggleSkillCatEditor()">Edit Skill Categories</button>
-        </div>
       </div>
       <div class="card">
         <h2>Fixed Resume <span class="badge">ATS-Friendly</span> <span class="ats-score" id="atsScore" style="display:none"></span></h2>
@@ -318,6 +329,65 @@ textarea.letter-output{min-height:350px;font-family:var(--font-display);font-siz
           <button class="btn btn-secondary btn-sm" onclick="downloadResumeDoc()">?? Download .doc</button>
           <button class="btn btn-secondary btn-sm" onclick="downloadResumePdf()">?? Download .pdf</button>
         </div>
+      </div>
+    </div>
+    <div class="rf-info-section">
+      <h3>How Resume Fixer Works</h3>
+      <div class="rf-info-grid">
+        <div class="rf-info-card">
+          <div class="rf-info-icon">1</div>
+          <div>
+            <strong>Upload Your Resume</strong>
+            <p>Drag & drop or click to upload your resume in <code>.txt</code>, <code>.pdf</code>, or <code>.docx</code> format. The text is extracted automatically.</p>
+          </div>
+        </div>
+        <div class="rf-info-card">
+          <div class="rf-info-icon">2</div>
+          <div>
+            <strong>Paste the Job Description</strong>
+            <p>Copy the full job posting from LinkedIn, Indeed, or any job board and paste it into the JD field. This drives keyword matching.</p>
+          </div>
+        </div>
+        <div class="rf-info-card">
+          <div class="rf-info-icon">3</div>
+          <div>
+            <strong>Click Fix My Resume</strong>
+            <p>Your resume is parsed, skills are extracted and categorized, and matched keywords from the JD are highlighted in <span class="hl-blue">blue</span>.</p>
+          </div>
+        </div>
+        <div class="rf-info-card">
+          <div class="rf-info-icon">4</div>
+          <div>
+            <strong>Download &amp; Apply</strong>
+            <p>Download the fixed resume as a formatted <strong>.doc</strong> (Harvard style) or <strong>.txt</strong>. Copy to LinkedIn with one click.</p>
+          </div>
+        </div>
+      </div>
+      <div class="rf-info-features">
+        <div class="rf-feature">
+          <span class="rf-feature-icon">ATS</span>
+          <span>ATS-Optimized</span>
+          <p>Clean section headers, no tables or columns that confuse applicant tracking systems.</p>
+        </div>
+        <div class="rf-feature">
+          <span class="rf-feature-icon">Skills</span>
+          <span>Auto-Categorize</span>
+          <p>Skills are grouped into Languages, Frameworks, Databases, Tools, and Cloud categories automatically.</p>
+        </div>
+        <div class="rf-feature">
+          <span class="rf-feature-icon">Match</span>
+          <span>JD Keyword Match</span>
+          <p>See your ATS score and which job description keywords are in your resume vs. missing.</p>
+        </div>
+        <div class="rf-feature">
+          <span class="rf-feature-icon">Edit</span>
+          <span>Customizable</span>
+          <p>Edit skill categories, undo/redo changes, and switch between Harvard, Minimal, or Modern templates.</p>
+        </div>
+      </div>
+      <div class="rf-info-tip">
+        <strong>Pro Tip:</strong> Use the JD from the exact job you are applying to. The more specific the job description, the better the keyword match and ATS score.
+        <button class="btn btn-secondary btn-sm" style="margin-left:12px" onclick="toggleSkillCatEditor()">Edit Skill Categories</button>
       </div>
     </div>
   </div>
