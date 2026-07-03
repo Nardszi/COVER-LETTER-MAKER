@@ -117,19 +117,19 @@ textarea.letter-output{min-height:350px;font-family:Georgia,'Times New Roman',se
 .skill-cat-editor{display:none}
 .skill-cat-editor.active{display:block}
 .skill-cat-modal{position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(4px);z-index:1500;display:flex;align-items:center;justify-content:center}
-.skill-cat-modal .modal-inner{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);width:700px;max-width:95vw;max-height:85vh;display:flex;flex-direction:column}
+.skill-cat-modal .modal-inner{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);width:750px;max-width:95vw;max-height:90vh;display:flex;flex-direction:column}
 .skill-cat-modal .modal-head{padding:20px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
 .skill-cat-modal .modal-head h2{font-size:1.1rem;color:var(--text-bright);margin:0}
 .skill-cat-modal .modal-head .close-btn{background:none;border:none;color:var(--text-dim);font-size:1.5rem;cursor:pointer;padding:4px 8px;line-height:1}
 .skill-cat-modal .modal-head .close-btn:hover{color:var(--text-bright)}
 .skill-cat-modal .modal-body{padding:20px 24px;overflow-y:auto;flex:1}
 .skill-cat-modal .modal-foot{padding:16px 24px;border-top:1px solid var(--border);display:flex;gap:10px;justify-content:flex-end}
-.skill-cat-row{display:flex;gap:8px;margin-bottom:10px;align-items:center}
+.skill-cat-row{display:flex;gap:8px;margin-bottom:10px;align-items:flex-start}
 .skill-cat-row .cat-name{width:180px;flex-shrink:0}
 .skill-cat-row .cat-name input{width:100%;padding:8px 10px;font-size:.85rem;background:var(--card);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text)}
 .skill-cat-row .cat-keywords{flex:1}
-.skill-cat-row .cat-keywords input{width:100%;padding:8px 10px;font-size:.85rem;background:var(--card);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text)}
-.skill-cat-row .cat-remove{background:none;border:1px solid var(--border);color:var(--red);cursor:pointer;padding:6px 10px;border-radius:var(--radius-sm);font-size:.8rem}
+.skill-cat-row .cat-keywords textarea{width:100%;padding:8px 10px;font-size:.85rem;background:var(--card);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);min-height:60px;max-height:120px;resize:vertical;line-height:1.4;font-family:var(--font)}
+.skill-cat-row .cat-remove{background:none;border:1px solid var(--border);color:var(--red);cursor:pointer;padding:6px 10px;border-radius:var(--radius-sm);font-size:.8rem;margin-top:2px}
 .skill-cat-row .cat-remove:hover{background:rgba(239,68,68,.1)}
 .skill-cat-header{display:flex;gap:8px;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border)}
 .skill-cat-header span{font-size:.75rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:.5px}
@@ -1267,7 +1267,8 @@ function toggleSkillCatEditor(){
 function renderSkillCatEditor(){
   var html='';
   for(var i=0;i<_customSkillCats.length;i++){
-    html+='<div class="skill-cat-row"><div class="cat-name"><input type="text" value="'+(_customSkillCats[i].name||'').replace(/"/g,'&quot;')+'" data-idx="'+i+'" class="cat-name-input" placeholder="e.g. Languages"></div><div class="cat-keywords"><input type="text" value="'+(_customSkillCats[i].keywords||[]).join(', ').replace(/"/g,'&quot;')+'" data-idx="'+i+'" class="cat-keywords-input" placeholder="e.g. javascript, python, java"></div><button class="cat-remove" onclick="removeSkillCat('+i+')">&times;</button></div>';
+    var kw=(_customSkillCats[i].keywords||[]).join(', ');
+    html+='<div class="skill-cat-row"><div class="cat-name"><input type="text" value="'+(_customSkillCats[i].name||'').replace(/"/g,'&quot;')+'" data-idx="'+i+'" class="cat-name-input" placeholder="e.g. Languages"></div><div class="cat-keywords"><textarea data-idx="'+i+'" class="cat-keywords-input" placeholder="e.g. javascript, python, java">'+kw.replace(/</g,'&lt;')+'</textarea></div><button class="cat-remove" onclick="removeSkillCat('+i+')">&times;</button></div>';
   }
   document.getElementById('skillCatList').innerHTML=html;
 }
@@ -1278,7 +1279,8 @@ function applySkillCategories(){
   var kwInputs=document.querySelectorAll('.cat-keywords-input');
   _customSkillCats=[];
   for(var i=0;i<nameInputs.length;i++){
-    _customSkillCats.push({name:nameInputs[i].value,keywords:kwInputs[i].value.split(',').map(function(s){return s.trim().toLowerCase()}).filter(function(s){return s.length>0})});
+    var rawKw=kwInputs[i].value.split(/[,.\n]+/);
+    _customSkillCats.push({name:nameInputs[i].value,keywords:rawKw.map(function(s){return s.trim().toLowerCase()}).filter(function(s){return s.length>0})});
   }
   if(_resumeData&&_resumeData.skills){
     _resumeData.categorizedSkills=categorizeWithCustom(_resumeData.skills);
