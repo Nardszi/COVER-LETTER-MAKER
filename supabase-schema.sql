@@ -10,6 +10,7 @@ CREATE TABLE IF NOT EXISTS public.profiles (
   email TEXT,
   phone TEXT,
   resume_text TEXT,
+  resume_rf TEXT,
   skills JSONB DEFAULT '[]'::jsonb,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()

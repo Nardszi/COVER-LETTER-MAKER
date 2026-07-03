@@ -173,18 +173,35 @@ textarea.letter-output{min-height:350px;font-family:Georgia,'Times New Roman',se
     <div class="grid">
       <div class="card">
         <h2>Resume &amp; Job Description</h2>
-        <p style="font-size:.85rem;color:var(--text-dim);margin-bottom:14px;">Your resume and JD are shared with the Cover Letter tab.</p>
-        <div class="gen-area" style="margin-bottom:16px;">
-          <button class="btn btn-primary" onclick="fixResume()">?? Fix My Resume</button>
-          <button class="btn btn-secondary" onclick="clearAll()">Clear All</button>
+        <div class="form-group">
+          <label>Upload Your Resume</label>
+          <div class="upload-zone" id="uploadZoneRF">
+            <div class="icon">??</div>
+            <div class="text">Click to upload or drag &amp; drop</div>
+            <div class="hint">Supports .txt, .pdf, .docx</div>
+            <input type="file" id="fileInputRF" accept=".txt,.pdf,.docx">
+          </div>
+          <div class="upload-status" id="uploadStatusRF"></div>
         </div>
-        <div style="font-size:.8rem;color:var(--text-dim);">
+        <div class="form-group">
+          <label>Or Paste Your Resume</label>
+          <textarea class="resume-input" id="resumeInputRF" placeholder="Paste your resume here..."></textarea>
+        </div>
+        <div class="form-group">
+          <label>Paste Job Description</label>
+          <textarea class="jd-input" id="jdInputRF" placeholder="Paste the job description here..."></textarea>
+        </div>
+        <div class="gen-area">
+          <button class="btn btn-primary" onclick="fixResume()">?? Fix My Resume</button>
+          <button class="btn btn-secondary" onclick="clearResumeFixer()">Clear All</button>
+        </div>
+        <div style="font-size:.8rem;color:var(--text-dim);margin-top:12px;">
           <strong>What this does:</strong>
           <ul style="margin:8px 0 0 18px;line-height:1.6;">
-            <li>Reformats your resume into a clean ATS-friendly single-column layout</li>
-            <li>Matches skills and experience to keywords from the job description</li>
+            <li>Reformats your resume into a clean ATS-friendly layout</li>
+            <li>Matches skills to keywords from the job description</li>
             <li>Highlights matched keywords in <span style="background:#dbeafe;color:#1e40af;padding:1px 4px;border-radius:2px;">blue</span></li>
-            <li>Prioritizes matched skills at the top of your skills section</li>
+            <li>Groups skills by category (Languages, Frameworks, etc.)</li>
             <li>Download as .doc (opens in Word, editable)</li>
           </ul>
         </div>
@@ -279,6 +296,7 @@ async function saveProfile(){
       email:document.getElementById('userEmailInput').value.trim(),
       phone:document.getElementById('userPhone').value.trim(),
       resume_text:document.getElementById('resumeInput').value.trim(),
+      resume_rf:document.getElementById('resumeInputRF').value.trim(),
       skills:skillsArr,
       updated_at:new Date().toISOString()
     },{onConflict:'id'})
@@ -293,12 +311,13 @@ async function loadProfile(){
     document.getElementById('userEmailInput').value=data.email||'';
     document.getElementById('userPhone').value=data.phone||'';
     document.getElementById('resumeInput').value=data.resume_text||'';
+    document.getElementById('resumeInputRF').value=data.resume_rf||'';
     if(data.skills&&Array.isArray(data.skills)&&data.skills.length>0){
       _resumeData={name:data.name||'',contact:[],summary:'',skills:data.skills,matchedSkills:[],experience:[],education:[],other:[],jdKeywords:[]};
     }
   }catch(e){}
 }
-['userName','userEmailInput','userPhone','resumeInput'].forEach(function(id){var el=document.getElementById(id);if(el)el.addEventListener('input',debounce(saveProfile,1000))});
+['userName','userEmailInput','userPhone','resumeInput','resumeInputRF'].forEach(function(id){var el=document.getElementById(id);if(el)el.addEventListener('input',debounce(saveProfile,1000))});
 
 function switchTab(name){
   document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('active')});
@@ -341,6 +360,43 @@ uploadZone.addEventListener('dragover',function(e){e.preventDefault();uploadZone
 uploadZone.addEventListener('dragleave',function(){uploadZone.classList.remove('dragover')});
 uploadZone.addEventListener('drop',function(e){e.preventDefault();uploadZone.classList.remove('dragover');if(e.dataTransfer.files&&e.dataTransfer.files[0])handleFile(e.dataTransfer.files[0])});
 uploadZone.addEventListener('click',function(){fileInput.click()});
+
+// ─── RESUME FIXER UPLOAD ZONE ─────────────────────────────
+var uploadZoneRF=document.getElementById('uploadZoneRF'),fileInputRF=document.getElementById('fileInputRF'),uploadStatusRF=document.getElementById('uploadStatusRF');
+function setUploadStatusRF(m,t){uploadStatusRF.textContent=m;uploadStatusRF.className='upload-status show '+(t||'')}
+function hideUploadStatusRF(){uploadStatusRF.className='upload-status'}
+function handleFileRF(f){
+  if(!f)return;var ext=f.name.split('.').pop().toLowerCase();
+  if(ext==='txt'){
+    setUploadStatusRF('Reading '+f.name+'...','loading');
+    readFileAsText(f).then(function(t){document.getElementById('resumeInputRF').value=t;setUploadStatusRF('Loaded '+f.name,'success');setTimeout(hideUploadStatusRF,3000)}).catch(function(){setUploadStatusRF('Failed.','error')})
+  }else if(ext==='pdf'){
+    setUploadStatusRF('Extracting PDF...','loading');
+    readFileAsArrayBuffer(f).then(function(buf){
+      if(typeof pdfjsLib==='undefined'){setUploadStatusRF('PDF lib not loaded.','error');return}
+      return pdfjsLib.getDocument({data:buf}).promise;
+    }).then(function(pdf){
+      var ps=[];for(var i=1;i<=pdf.numPages;i++)ps.push(pdf.getPage(i).then(function(p){return p.getTextContent().then(function(c){return c.items.map(function(x){return x.str}).join(' ')})}));
+      return Promise.all(ps).then(function(p){return p.join('\n\n')});
+    }).then(function(t){document.getElementById('resumeInputRF').value=t;setUploadStatusRF('Loaded '+f.name,'success');setTimeout(hideUploadStatusRF,3000)}).catch(function(){setUploadStatusRF('Failed to read PDF.','error')})
+  }else if(ext==='docx'){
+    setUploadStatusRF('Extracting DOCX...','loading');
+    readFileAsArrayBuffer(f).then(function(buf){
+      if(typeof mammoth==='undefined'){setUploadStatusRF('DOCX lib not loaded.','error');return}
+      return mammoth.extractRawText({arrayBuffer:buf});
+    }).then(function(r){document.getElementById('resumeInputRF').value=r.value;setUploadStatusRF('Loaded '+f.name,'success');setTimeout(hideUploadStatusRF,3000)}).catch(function(){setUploadStatusRF('Failed to read DOCX.','error')})
+  }else setUploadStatusRF('Unsupported: .'+ext,'error')
+}
+fileInputRF.addEventListener('change',function(e){if(e.target.files&&e.target.files[0])handleFileRF(e.target.files[0]);fileInputRF.value=''});
+uploadZoneRF.addEventListener('dragover',function(e){e.preventDefault();uploadZoneRF.classList.add('dragover')});
+uploadZoneRF.addEventListener('dragleave',function(){uploadZoneRF.classList.remove('dragover')});
+uploadZoneRF.addEventListener('drop',function(e){e.preventDefault();uploadZoneRF.classList.remove('dragover');if(e.dataTransfer.files&&e.dataTransfer.files[0])handleFileRF(e.dataTransfer.files[0])});
+uploadZoneRF.addEventListener('click',function(){fileInputRF.click()});
+function clearResumeFixer(){
+  document.getElementById('resumeInputRF').value='';
+  document.getElementById('jdInputRF').value='';
+  document.getElementById('fixedResumeOutput').innerHTML='<div class="empty-state" style="padding:60px 20px;"><div class="icon">📄</div><p>Upload your resume and paste a job description, then click <strong>Fix My Resume</strong>.</p></div>';
+}
 function extractJobInfo(t){
   var title='',company='',lines=t.split('\n').filter(function(l){return l.trim()});
   var tp=[/(?:job\s*title|position|role|we\s*are\s*hiring\s*a\s*n?|title)\s*:?\s*(.+)/i,/(?:seeking|hiring|looking\s*for|need\s*a\s*n?)\s*(.+?)(?:\s*at\s*|\s*with\s*|\s*for\s*|$)/i,/^(?:senior|junior|lead|principal|staff|head\s*of)?\s*(.+?)\s*(?:engineer|developer|designer|manager|analyst|specialist|architect|consultant|coordinator|associate|director)/i];
@@ -646,7 +702,7 @@ function categorizeSkills(skills,matched){
 }
 
 function fixResume(){
-  var resume=document.getElementById('resumeInput').value.trim(),jd=document.getElementById('jdInput').value.trim();
+  var resume=document.getElementById('resumeInputRF').value.trim(),jd=document.getElementById('jdInputRF').value.trim();
   if(!resume){showToast('Paste or upload a resume first.','error');return}
   var jdKeywords=jd?extractSkills(jd):[],jdLower=jdKeywords.map(function(s){return s.toLowerCase()});
   var sections=parseResumeSections(resume);
@@ -896,6 +952,8 @@ function clearAll(){
   document.getElementById('resumeInput').value='';document.getElementById('jdInput').value='';
   document.getElementById('letterOutput').value='';document.getElementById('letterOutput').setAttribute('readonly',true);document.getElementById('letterOutput').style.cursor='default';
   hideUploadStatus();
+  document.getElementById('resumeInputRF').value='';document.getElementById('jdInputRF').value='';
+  hideUploadStatusRF();
   var fr=document.getElementById('fixedResumeOutput');if(fr)fr.innerHTML='<div class="empty-state" style="padding:60px 20px;"><div class="icon">??</div><p>Upload your resume and paste a job description, then click <strong>Fix My Resume</strong>.</p></div>';
   showToast('Cleared all fields.','success')
 }
