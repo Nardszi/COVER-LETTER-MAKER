@@ -429,14 +429,25 @@ function parseResumeSections(txt){
     'CERTIFICATIONS','CERTIFICATES','LICENSES','AWARDS','HONORS','LANGUAGES','INTERESTS','VOLUNTEER','PUBLICATIONS','REFERENCES','ACTIVITIES','OTHER'];
   var sectionRegex=/^(CAREER OBJECTIVE|PROFESSIONAL SUMMARY|SUMMARY|PROFILE|OBJECTIVE|ABOUT ME|TECHNICAL SKILLS|SKILLS|CORE COMPETENCIES|EXPERTISE|TECHNOLOGIES|TECHNICAL PROFICIENCY|WORK EXPERIENCE|EXPERIENCE|EMPLOYMENT HISTORY|PROFESSIONAL EXPERIENCE|PROFESSIONAL BACKGROUND|EDUCATION|ACADEMIC BACKGROUND|QUALIFICATIONS|EDUCATIONAL BACKGROUND|PROJECTS|PROJECT EXPERIENCE|PORTFOLIO|KEY PROJECTS|CERTIFICATIONS|CERTIFICATES|LICENSES|AWARDS|HONORS|LANGUAGES|INTERESTS|VOLUNTEER|PUBLICATIONS|REFERENCES|ACTIVITIES|OTHER)/i;
 
+  // Insert newlines before section headers
   for(var i=0;i<headerWords.length;i++){
     raw=raw.replace(new RegExp('\\b('+headerWords[i]+')\\s*','gi'),'\n$1\n');
   }
-  raw=raw.replace(/[•·]\s*/g,'\n• ');
+
+  // ─── BULLET DETECTION ───────────────────────────────────
+  // Split on pipe separators
   raw=raw.replace(/\s*\|\s*/g,'\n');
+  // Split lines that start with bullet chars
+  raw=raw.replace(/([^\n])([•·◦▪□■●○◆◇★☆➤►‣⁃])\s*/g,'$1\n$2 ');
+  // Split on numbered lists like "1." "2." "1)" "2)"
+  raw=raw.replace(/([^\n])(\d+[.)]\s)/g,'$1\n$2');
+  // Split on dash bullets at start of content
+  raw=raw.replace(/([^\n])\s+(-{1,3})\s+(?=[A-Z])/g,'$1\n$2 ');
+  // Normalize multiple newlines
   raw=raw.replace(/\n{3,}/g,'\n\n').replace(/^\s+/,'');
   var lines=raw.split('\n').map(function(l){return l.trim()}).filter(function(l){return l.length>0});
 
+  // ─── CONTACT EXTRACTION ────────────────────────────────
   var firstSectionIdx=lines.length;
   for(var i=0;i<lines.length;i++){
     if(sectionRegex.test(lines[i])){firstSectionIdx=i;break}
@@ -477,6 +488,7 @@ function parseResumeSections(txt){
   }
   if(!nameFound)sec.contact.push({type:'name',value:'YOUR NAME'});
 
+  // ─── SECTION ROUTING ───────────────────────────────────
   var cur='other';
   for(var i=firstSectionIdx;i<lines.length;i++){
     var l=lines[i];
@@ -484,11 +496,28 @@ function parseResumeSections(txt){
       cur=l.toUpperCase().trim();
       continue
     }
+
+    // Detect bullet chars and normalize to "• "
+    var isBullet=false;
+    var bulletText=l.replace(/^[\s]*[•·◦▪□■●○◆◇★☆➤►‣⁃]\s*/,'').trim();
+    if(bulletText!==l&&bulletText.length>3){isBullet=true;l='• '+bulletText}
+    // Detect dash bullets: "- " or "-- " at start
+    else if(l.match(/^\s*-{1,3}\s+\S/)){
+      isBullet=true;
+      l='• '+l.replace(/^\s*-{1,3}\s+/,'').trim();
+    }
+    // Detect numbered bullets: "1." "2." "1)" "2)"
+    else if(l.match(/^\s*\d+[.)]\s+\S/)){
+      isBullet=true;
+      l='• '+l.replace(/^\s*\d+[.)]\s+/,'').trim();
+    }
+
     if(cur.match(/SUMMARY|PROFILE|OBJECTIVE|ABOUT|CAREER/i)){
-      sec.summary+=(sec.summary?' ':l)
+      sec.summary+=(sec.summary?' ':l.replace(/^• /,''))
     }
     else if(cur.match(/^SKILL|^TECH|^CORE|^COMPETENC|^EXPERT|^TECHNOLOG/i)){
-      var skillParts=l.split(/[•·,;|\/]/);
+      var skillStr=l.replace(/^• /,'');
+      var skillParts=skillStr.split(/[•·,;|\/]/);
       for(var j=0;j<skillParts.length;j++){
         var s=skillParts[j].trim();
         if(s.length>1 && s.length<80)sec.skills.push(s);
@@ -501,7 +530,7 @@ function parseResumeSections(txt){
       sec.education.push(l);
     }
     else if(cur.match(/^PROJECT|^PORTFOLIO/i)){
-      sec.other.push('PROJECT: '+l);
+      sec.other.push('PROJECT: '+l.replace(/^• /,''));
     }
     else if(cur.match(/^CERTIF|^LICENSE|^AWARD|^HONOR|^LANGUAGE|^VOLUNTEER|^PUBLICATION/i)){
       sec.other.push(l);
@@ -517,10 +546,15 @@ function parseExpBlocks(lines){
   var blocks=[],cur=null;
   for(var i=0;i<lines.length;i++){
     var l=lines[i].trim();
-    if(l.match(/^[•·\-\*]$/))continue;
+
+    // Skip standalone bullet chars
+    if(l.match(/^[•·◦▪□■●○◆◇★☆➤►‣⁃\-]{1,3}$/))continue;
+
+    // Detect job entry: "Role at Company" or "Role — Company" or "Role | Company"
     var m=l.match(/^(.+?)\s+(?:at|@|—|-)\s+(.+?)(?:\s*[(\[]|$)/i);
     if(!m)m=l.match(/^(.+?)\s*[|]\s*(.+?)(?:\s*[(\[]|$)/);
     if(!m)m=l.match(/^(.+?)\s*[-–]\s+(.+?)(?:\s*[(\[]|$)/);
+
     if(m){
       if(cur)blocks.push(cur);
       cur={role:m[1].trim(),org:m[2].trim(),date:'',bullets:[]};
@@ -528,9 +562,17 @@ function parseExpBlocks(lines){
       if(rest.match(/\d{4}/))cur.date=rest;
     }
     else if(cur){
-      if(l.match(/^[•·\-\*]\s*/)){
-        var bulletText=l.replace(/^[•·\-\*]\s*/,'').trim();
-        if(bulletText.length>5)cur.bullets.push(bulletText);
+      // Clean bullet prefix
+      var clean=l.replace(/^[\s]*[•·◦▪□■●○◆◇★☆➤►‣⁃]\s*/,'').trim();
+      var isDashBullet=l.match(/^\s*-{1,3}\s+\S/);
+      var isNumBullet=l.match(/^\s*\d+[.)]\s+\S/);
+      var isBulletSymbol=(clean!==l&&clean.length>3);
+
+      if(isBulletSymbol||isDashBullet||isNumBullet){
+        var bulletContent=clean;
+        if(isDashBullet)bulletContent=l.replace(/^\s*-{1,3}\s+/,'').trim();
+        if(isNumBullet)bulletContent=l.replace(/^\s*\d+[.)]\s+/,'').trim();
+        if(bulletContent.length>3)cur.bullets.push(bulletContent);
       }
       else if(l.match(/\d{4}\s*[-–—]\s*(Present|Current|\d{4})/i)&&l.length<60){
         cur.date=(cur.date?cur.date+' | ':'')+l;
