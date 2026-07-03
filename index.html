@@ -915,6 +915,7 @@ function downloadClPdf(){
   showToast('PDF downloaded!','success');
 }
 function esc(t){return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+function escH(t){return(t||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
 function highlightKW(text,keywords){
   var r=esc(text);
   for(var i=0;i<keywords.length;i++){var kw=keywords[i],re=new RegExp('\\b('+kw.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')\\b','gi');r=r.replace(re,'<span class="resume-skill-matched">$1</span>')}
