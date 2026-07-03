@@ -414,19 +414,93 @@ function highlightKW(text,keywords){
   return r
 }
 function parseResumeSections(txt){
-  var sec={contact:[],summary:'',experience:[],education:[],skills:[],other:[]},lines=txt.split('\n').filter(function(l){return l.trim()}),cur='contact';
-  var sh={summary:/^(summary|profile|objective|about\s*me)/i,experience:/^(experience|work\s*(history|experience)|employment|professional\s*experience)/i,education:/^(education|academic|qualifications|degree)/i,skills:/^(skills|technical\s*skills|core\s*competencies|expertise)/i,other:/^(certifications|certificates|projects|awards|honors|languages|interests|volunteer|publications|references)/i};
+  var sec={contact:[],summary:'',experience:[],education:[],skills:[],other:[]};
+
+  // Normalize
+  var raw=txt.replace(/\r\n/g,'\n').replace(/\r/g,'\n');
+
+  // ─── SPLIT ON SECTION HEADERS (even if embedded) ─────────
+  var headerWords=['CAREER OBJECTIVE','PROFESSIONAL SUMMARY','SUMMARY','PROFILE','OBJECTIVE','ABOUT ME',
+    'TECHNICAL SKILLS','SKILLS','CORE COMPETENCIES','EXPERTISE','TECHNOLOGIES',
+    'WORK EXPERIENCE','EXPERIENCE','EMPLOYMENT HISTORY','PROFESSIONAL EXPERIENCE','PROFESSIONAL BACKGROUND',
+    'EDUCATION','ACADEMIC BACKGROUND','QUALIFICATIONS',
+    'PROJECTS','PROJECT EXPERIENCE','PORTFOLIO',
+    'CERTIFICATIONS','CERTIFICATES','LICENSES','AWARDS','HONORS','LANGUAGES','INTERESTS','VOLUNTEER','PUBLICATIONS','REFERENCES','ACTIVITIES'];
+  for(var i=0;i<headerWords.length;i++){
+    raw=raw.replace(new RegExp('('+headerWords[i]+')','gi'),'\n$1\n');
+  }
+  raw=raw.replace(/\n{3,}/g,'\n\n').replace(/^\s+/,'');
+  var lines=raw.split('\n').map(function(l){return l.trim()}).filter(function(l){return l.length>0});
+
+  // ─── PHASE 1: Extract contact from the first few lines ──
+  var contactDone=false;
+  var sectionRegex=/^(CAREER OBJECTIVE|PROFESSIONAL SUMMARY|SUMMARY|PROFILE|OBJECTIVE|ABOUT ME|TECHNICAL SKILLS|SKILLS|CORE COMPETENCIES|EXPERTISE|TECHNOLOGIES|WORK EXPERIENCE|EXPERIENCE|EMPLOYMENT HISTORY|PROFESSIONAL EXPERIENCE|PROFESSIONAL BACKGROUND|EDUCATION|ACADEMIC BACKGROUND|QUALIFICATIONS|PROJECTS|PROJECT EXPERIENCE|PORTFOLIO|CERTIFICATIONS|CERTIFICATES|LICENSES|AWARDS|HONORS|LANGUAGES|INTERESTS|VOLUNTEER|PUBLICATIONS|REFERENCES|ACTIVITIES)/i;
+
+  // Split first line on common separators: · | / — -  to find contact parts
+  var contactLine='';
+  for(var i=0;i<Math.min(3,lines.length);i++){
+    if(sectionRegex.test(lines[i]))break;
+    contactLine+=' '+lines[i];
+  }
+  contactLine=contactLine.trim();
+
+  // Extract email anywhere
+  var emailMatch=contactLine.match(/[\w.-]+@[\w.-]+\.\w+/);
+  if(emailMatch)sec.contact.push({type:'email',value:emailMatch[0]});
+
+  // Extract phone anywhere
+  var phoneMatch=contactLine.match(/\(?\d{3}\)?[\s.-]?\d{3,4}[\s.-]?\d{3,4}/);
+  if(phoneMatch)sec.contact.push({type:'phone',value:phoneMatch[0]});
+
+  // Extract links
+  var linkMatches=contactLine.match(/(linkedin\.com\/\S+|github\.com\/\S+)/gi);
+  if(linkMatches){for(var i=0;i<linkMatches.length;i++)sec.contact.push({type:'link',value:linkMatches[i]})}
+
+  // Extract name: first ALL CAPS block (2-5 words, no numbers/symbols)
+  var nameFound=false;
+  var nameRegex=/([A-Z][A-Z.'\-]+(?:\s+[A-Z][A-Z.'\-]+){1,4})/g;
+  var nameMatch=nameRegex.exec(contactLine);
+  if(nameMatch){
+    var candidate=nameMatch[1];
+    // Make sure it's not a section header or contains tech words
+    if(!candidate.match(/(ENGINEER|DEVELOPER|MANAGER|DIRECTOR|ANALYST|DESIGNER|CONSULTANT|SPECIALIST|SKILLS|EXPERIENCE|EDUCATION|PROJECTS|GRADUATE)/)){
+      sec.contact.push({type:'name',value:candidate});nameFound=true;
+    }
+  }
+  if(!nameFound){
+    // Fallback: first line that looks like a name
+    for(var i=0;i<Math.min(3,lines.length);i++){
+      if(sectionRegex.test(lines[i]))break;
+      var l=lines[i].replace(/[^A-Z\s.]/g,'').trim();
+      if(l.split(/\s+/).length>=2 && l.split(/\s+/).length<=4 && l.length>3 && l.length<40){
+        sec.contact.push({type:'name',value:l});nameFound=true;break;
+      }
+    }
+  }
+  if(!nameFound)sec.contact.push({type:'name',value:'YOUR NAME'});
+
+  // ─── PHASE 2: Process sections ──────────────────────────
+  var firstSectionIdx=0;
   for(var i=0;i<lines.length;i++){
-    var l=lines[i].trim(),matched=false;
-    for(var k in sh){if(sh[k].test(l)){cur=k;matched=true;break}}
-    if(matched)continue;
-    if(cur==='contact'){if(l.match(/^[A-Z][a-zA-Z\s.]+$/)&&l.split(' ').length<=4&&!l.match(/@|http|\.com|\(|\)/))sec.contact.push({type:'name',value:l});else if(l.match(/@/))sec.contact.push({type:'email',value:l});else if(l.match(/[\d\-\(\)\+\.]{7,}/))sec.contact.push({type:'phone',value:l});else if(l.match(/linkedin|github|portfolio|http/i))sec.contact.push({type:'link',value:l});else if(l.match(/^[A-Z]/)&&l.length>10)sec.summary+=(sec.summary?' ':'')+l}
-    else if(cur==='summary')sec.summary+=(sec.summary?' ':'')+l;
-    else if(cur==='experience')sec.experience.push(l);
-    else if(cur==='education')sec.education.push(l);
-    else if(cur==='skills')sec.skills.push(l);
+    if(sectionRegex.test(lines[i])){firstSectionIdx=i;break}
+  }
+
+  var cur='other';
+  for(var i=firstSectionIdx;i<lines.length;i++){
+    var l=lines[i];
+    if(sectionRegex.test(l)){
+      cur=l.toUpperCase();
+      continue
+    }
+    // Route to correct section
+    if(cur.match(/SUMMARY|PROFILE|OBJECTIVE|ABOUT|CAREER/i))sec.summary+=(sec.summary?' ':'')+l;
+    else if(cur.match(/^SKILL|^TECH|^CORE|^COMPETENC|^EXPERT|^TECHNOLOG/i))sec.skills.push(l);
+    else if(cur.match(/^EXPER|^WORK|^EMPLOY|^PROFESSIONAL EXP/i))sec.experience.push(l);
+    else if(cur.match(/^EDUC|^ACADEMIC|^QUALIF/i))sec.education.push(l);
+    else if(cur.match(/^PROJECT|^PORTFOLIO/i))sec.other.push('PROJECT: '+l);
     else sec.other.push(l)
   }
+
   return sec
 }
 function parseExpBlocks(lines){
