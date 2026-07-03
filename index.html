@@ -362,7 +362,7 @@ var uploadZoneRF=document.getElementById('uploadZoneRF'),fileInputRF=document.ge
 function setUploadStatusRF(m,t){uploadStatusRF.textContent=m;uploadStatusRF.className='upload-status show '+(t||'')}
 function hideUploadStatusRF(){uploadStatusRF.className='upload-status'}
 function handleFileRF(f){
-  if(!f)return;var ext=f.name.split('.').toLowerCase().pop();
+  if(!f)return;var ext=f.name.split('.').pop().toLowerCase();
   if(ext==='txt'){
     setUploadStatusRF('Reading '+f.name+'...','loading');
     readFileAsText(f).then(function(t){_uploadedResume=t;setUploadStatusRF('Loaded '+f.name,'success');setTimeout(hideUploadStatusRF,3000)}).catch(function(){setUploadStatusRF('Failed.','error')})
