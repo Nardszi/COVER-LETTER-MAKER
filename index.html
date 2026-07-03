@@ -284,6 +284,15 @@ textarea.letter-output{min-height:350px;font-family:var(--font-display);font-siz
   <div class="tab-content" id="contentResumeFixer">
     <div class="grid">
       <div class="card">
+        <h2>Your Information</h2>
+        <div class="form-row">
+          <div class="form-group"><label>Full Name</label><input type="text" id="rfName" placeholder="John Doe"></div>
+          <div class="form-group"><label>Email</label><input type="email" id="rfEmail" placeholder="john@email.com"></div>
+          <div class="form-group"><label>Phone</label><input type="tel" id="rfPhone" placeholder="+1 (555) 123-4567"></div>
+        </div>
+        <div class="form-group"><label>LinkedIn / Portfolio (optional)</label><input type="text" id="rfLink" placeholder="linkedin.com/in/johndoe"></div>
+      </div>
+      <div class="card">
         <h2>Resume &amp; Job Description</h2>
         <div class="form-group">
           <label>Upload Your Resume</label>
@@ -510,20 +519,33 @@ async function loadProfile(){
     document.getElementById('userEmailInput').value=data.email||'';
     document.getElementById('userPhone').value=data.phone||'';
     document.getElementById('resumeInput').value=data.resume_text||'';
+    document.getElementById('rfName').value=data.name||'';
+    document.getElementById('rfEmail').value=data.email||'';
+    document.getElementById('rfPhone').value=data.phone||'';
     if(data.skills&&Array.isArray(data.skills)&&data.skills.length>0){
       _resumeData={name:data.name||'',contact:[],summary:'',skills:data.skills,matchedSkills:[],experience:[],education:[],other:[],jdKeywords:[]};
     }
   }catch(e){}
 }
 ['userName','userEmailInput','userPhone','resumeInput'].forEach(function(id){var el=document.getElementById(id);if(el)el.addEventListener('input',debounce(saveProfile,1000))});
+['rfName','rfEmail','rfPhone','rfLink'].forEach(function(id){var el=document.getElementById(id);if(el)el.addEventListener('input',function(){
+  var cl=document.getElementById(id.replace('rf','user').replace('Name','Name').replace('Email','EmailInput').replace('Phone','Phone').replace('Link','Link'));
+  if(cl&&id!=='rfLink')cl.value=el.value;
+})});
+
+function syncRFFromCL(){
+  var map={userName:'rfName',userEmailInput:'rfEmail',userPhone:'rfPhone'};
+  Object.keys(map).forEach(function(clId){var cl=document.getElementById(clId),rf=document.getElementById(map[clId]);if(cl&&rf&&!rf.value)rf.value=cl.value});
+}
 
 function switchTab(name){
   document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('active')});
   document.querySelectorAll('.tab-content').forEach(function(c){c.classList.remove('active')});
-  var map={coverletter:'CoverLetter','resumefixer':'ResumeFixer'};
+  var map={coverletter:'CoverLetter',resumefixer:'ResumeFixer'};
   var key=name.replace(/-([a-z])/g,function(g){return g[1].toUpperCase()});
   document.getElementById('tab'+key.charAt(0).toUpperCase()+key.slice(1)).classList.add('active');
-  document.getElementById('content'+key.charAt(0).toUpperCase()+key.slice(1)).classList.add('active')
+  document.getElementById('content'+key.charAt(0).toUpperCase()+key.slice(1)).classList.add('active');
+  if(key==='resumefixer')syncRFFromCL();
 }
 
 var uploadZone=document.getElementById('uploadZone'),fileInput=document.getElementById('fileInput'),uploadStatus=document.getElementById('uploadStatus');
@@ -596,6 +618,10 @@ uploadZoneRF.addEventListener('dragleave',function(){uploadZoneRF.classList.remo
 uploadZoneRF.addEventListener('drop',function(e){e.preventDefault();uploadZoneRF.classList.remove('dragover');if(e.dataTransfer.files&&e.dataTransfer.files[0])handleFileRF(e.dataTransfer.files[0])});
 function clearResumeFixer(){
   _uploadedResume='';
+  document.getElementById('rfName').value='';
+  document.getElementById('rfEmail').value='';
+  document.getElementById('rfPhone').value='';
+  document.getElementById('rfLink').value='';
   document.getElementById('jdInputRF').value='';
   document.getElementById('fixedResumeOutput').innerHTML='<div class="empty-state" style="padding:60px 20px;"><div class="icon">📄</div><p>Upload your resume and paste a job description, then click <strong>Fix My Resume</strong>.</p></div>';
 }
@@ -955,10 +981,12 @@ function fixResume(){
   }
 
   // Build contact
-  var nameEl=sections.contact.find(function(c){return c.type==='name'}),nameStr=nameEl?nameEl.value:document.getElementById('userName').value.trim()||'YOUR NAME';
-  var emailEl=sections.contact.find(function(c){return c.type==='email'}),emailStr=emailEl?emailEl.value:document.getElementById('userEmailInput').value.trim();
-  var phoneEl=sections.contact.find(function(c){return c.type==='phone'}),phoneStr=phoneEl?phoneEl.value:document.getElementById('userPhone').value.trim();
+  var nameEl=sections.contact.find(function(c){return c.type==='name'}),nameStr=nameEl?nameEl.value:document.getElementById('rfName').value.trim()||document.getElementById('userName').value.trim()||'YOUR NAME';
+  var emailEl=sections.contact.find(function(c){return c.type==='email'}),emailStr=emailEl?emailEl.value:document.getElementById('rfEmail').value.trim()||document.getElementById('userEmailInput').value.trim();
+  var phoneEl=sections.contact.find(function(c){return c.type==='phone'}),phoneStr=phoneEl?phoneEl.value:document.getElementById('rfPhone').value.trim()||document.getElementById('userPhone').value.trim();
   var linkEls=sections.contact.filter(function(c){return c.type==='link'}).map(function(c){return c.value});
+  var rfLink=document.getElementById('rfLink').value.trim();
+  if(rfLink&&linkEls.indexOf(rfLink)===-1)linkEls.push(rfLink);
   var contactParts=[];if(emailStr)contactParts.push(emailStr);if(phoneStr)contactParts.push(phoneStr);linkEls.forEach(function(l){contactParts.push(l)});
 
   // Store structured data for .doc export
