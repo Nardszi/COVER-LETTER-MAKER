@@ -65,6 +65,20 @@ textarea.jd-input{min-height:180px}
 .letter-output .cl-highlight{background:rgba(59,130,246,.15);color:var(--accent);padding:1px 4px;border-radius:2px}
 .letter-output.template-modern{font-family:var(--font);border-left:3px solid var(--accent);padding-left:20px}
 .letter-output.template-minimal{font-family:'Courier New',monospace;font-size:.88rem;border:none;padding:0;background:transparent}
+.letter-output.template-executive{font-family:Georgia,serif;border:2px solid var(--text-dim);padding:32px}
+.letter-output.template-executive .cl-header{text-align:center;font-size:1.4rem;letter-spacing:2px;text-transform:uppercase}
+.letter-output.template-executive .cl-contact{text-align:center}
+.letter-output.template-executive .cl-sep{border-top:2px solid var(--text-dim)}
+.letter-output.template-executive .cl-closing{text-align:right}
+.letter-output.template-creative{font-family:var(--font);background:linear-gradient(135deg,var(--card),rgba(99,102,241,.08));border:1px solid rgba(99,102,241,.2)}
+.letter-output.template-creative .cl-header{color:var(--accent);font-size:1.3rem}
+.letter-output.template-creative .cl-highlight{background:rgba(99,102,241,.2);color:#818cf8}
+.letter-output.template-technical{font-family:'Courier New',monospace;font-size:.85rem;background:#0d1117;color:#c9d1d9;border-color:#30363d}
+.letter-output.template-technical .cl-header{color:#58a6ff}
+.letter-output.template-technical .cl-contact{color:#8b949e}
+.letter-output.template-technical .cl-sep{border-color:#30363d}
+.letter-output.template-technical .cl-highlight{background:rgba(56,139,253,.15);color:#58a6ff}
+.letter-output.template-technical .cl-closing{color:#8b949e}
 .gen-area{display:flex;gap:14px;flex-wrap:wrap;margin-top:6px}
 .gen-area .btn{flex:1;min-width:150px;padding:13px 22px;font-size:.95rem}
 .output-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
@@ -287,6 +301,9 @@ textarea.jd-input{min-height:180px}
             <option value="harvard">Harvard</option>
             <option value="modern">Modern</option>
             <option value="minimal">Minimal</option>
+            <option value="executive">Executive</option>
+            <option value="creative">Creative</option>
+            <option value="technical">Technical</option>
           </select>
           <button class="btn btn-secondary btn-sm" onclick="toggleClPreviewDark()">Dark Preview</button>
           <div class="undo-redo">
@@ -788,7 +805,7 @@ function generateCoverLetter(){
 function renderClPreview(){
   if(!_clData)return;
   var d=_clData,el=document.getElementById('letterOutput'),tpl=document.getElementById('clTemplateSelect').value;
-  el.className='letter-output'+(tpl==='modern'?' template-modern':'')+(tpl==='minimal'?' template-minimal':'');
+  el.className='letter-output template-'+tpl;
   var h='';
   h+='<div class="cl-header">'+escH(d.name.toUpperCase())+'</div>';
   var contactParts=[];if(d.email)contactParts.push(d.email);if(d.phone)contactParts.push(d.phone);if(d.link)contactParts.push(d.link);
