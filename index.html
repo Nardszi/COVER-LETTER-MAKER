@@ -104,6 +104,40 @@ textarea.letter-output{min-height:350px;font-family:Georgia,'Times New Roman',se
 .empty-state{text-align:center;padding:40px 20px;color:var(--text-dim)}
 .empty-state .icon{font-size:3rem;margin-bottom:12px}
 .empty-state p{font-size:.9rem}
+.btn-loading{pointer-events:none;opacity:.7}
+.btn-loading .spinner{margin-right:6px}
+.ats-score{display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:999px;font-size:.8rem;font-weight:600;margin-left:8px}
+.ats-score.high{background:rgba(16,185,129,.15);color:#10b981;border:1px solid rgba(16,185,129,.3)}
+.ats-score.medium{background:rgba(251,191,36,.15);color:#fbbf24;border:1px solid rgba(251,191,36,.3)}
+.ats-score.low{background:rgba(239,68,68,.15);color:#ef4444;border:1px solid rgba(239,68,68,.3)}
+.preview-toolbar{display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap}
+.preview-toolbar .btn{font-size:.75rem;padding:4px 10px}
+.template-select{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-size:.8rem;padding:4px 8px;cursor:pointer}
+.history-search{width:100%;padding:8px 12px;background:var(--card);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-size:.85rem;margin-bottom:12px}
+.skill-cat-editor{margin-top:8px;padding:8px;background:var(--card);border:1px solid var(--border);border-radius:var(--radius-sm);display:none}
+.skill-cat-editor.active{display:block}
+.skill-cat-row{display:flex;gap:6px;margin-bottom:4px;align-items:center}
+.skill-cat-row input{flex:1;padding:4px 8px;font-size:.8rem}
+.skill-cat-row .btn{padding:4px 8px;font-size:.75rem}
+.undo-redo{display:flex;gap:4px;margin-left:auto}
+.undo-redo .btn{padding:4px 10px;font-size:.8rem}
+@media(max-width:600px){
+  .nav{padding:12px 16px;flex-wrap:wrap;gap:8px}
+  .nav h1{font-size:1rem}
+  .tab-bar{padding:0 12px;top:52px}
+  .tab{padding:10px 14px;font-size:.8rem}
+  .container{padding:12px}
+  .card{padding:16px}
+  .gen-area{flex-direction:column}
+  .gen-area .btn{min-width:auto}
+  .output-actions{flex-direction:column}
+  .output-actions .btn{width:100%}
+  .preview-toolbar{flex-direction:column;align-items:stretch}
+  .fixed-resume-output{padding:20px 16px;font-size:9pt;max-height:500px}
+  .resume-name{font-size:18pt!important}
+  .form-row{grid-template-columns:1fr!important}
+  .modal{padding:20px;width:95vw}
+}
 </style>
 </head>
 <body>
@@ -167,6 +201,7 @@ textarea.letter-output{min-height:350px;font-family:Georgia,'Times New Roman',se
     </div>
     <div class="card" id="historySection" style="margin-top:24px;display:none;">
       <h2>?? Cover Letter History</h2>
+      <input type="text" class="history-search" id="historySearch" placeholder="Search cover letters..." oninput="filterHistory()">
       <div id="historyList"></div>
     </div>
   </div>
@@ -200,12 +235,31 @@ textarea.letter-output{min-height:350px;font-family:Georgia,'Times New Roman',se
             <li>Matches skills to keywords from the job description</li>
             <li>Highlights matched keywords in <span style="background:#dbeafe;color:#1e40af;padding:1px 4px;border-radius:2px;">blue</span></li>
             <li>Groups skills by category (Languages, Frameworks, etc.)</li>
-            <li>Download as .doc (opens in Word, editable)</li>
+            <li>Download as .doc or .pdf</li>
           </ul>
+          <button class="btn btn-secondary btn-sm" style="margin-top:8px" onclick="toggleSkillCatEditor()">Edit Skill Categories</button>
+          <div class="skill-cat-editor" id="skillCatEditor">
+            <div id="skillCatList"></div>
+            <button class="btn btn-secondary btn-sm" style="margin-top:6px" onclick="addSkillCategory()">+ Add Category</button>
+            <button class="btn btn-primary btn-sm" style="margin-top:6px" onclick="applySkillCategories()">Apply</button>
+          </div>
         </div>
       </div>
       <div class="card">
-        <h2>Fixed Resume <span class="badge">ATS-Friendly</span></h2>
+        <h2>Fixed Resume <span class="badge">ATS-Friendly</span> <span class="ats-score" id="atsScore" style="display:none"></span></h2>
+        <div class="preview-toolbar" id="previewToolbar" style="display:none">
+          <select class="template-select" id="templateSelect" onchange="changeTemplate()">
+            <option value="harvard">Harvard</option>
+            <option value="minimal">Minimal</option>
+            <option value="modern">Modern</option>
+          </select>
+          <button class="btn btn-secondary btn-sm" onclick="togglePreviewDark()">Dark Preview</button>
+          <button class="btn btn-secondary btn-sm" onclick="copyLinkedIn()">LinkedIn</button>
+          <div class="undo-redo">
+            <button class="btn btn-secondary btn-sm" onclick="undoResume()" id="undoBtn" disabled>Undo</button>
+            <button class="btn btn-secondary btn-sm" onclick="redoResume()" id="redoBtn" disabled>Redo</button>
+          </div>
+        </div>
         <div class="fixed-resume-output" id="fixedResumeOutput">
           <div class="empty-state" style="padding:60px 20px;">
             <div class="icon">??</div>
@@ -214,6 +268,7 @@ textarea.letter-output{min-height:350px;font-family:Georgia,'Times New Roman',se
         </div>
         <div class="output-actions">
           <button class="btn btn-secondary btn-sm" onclick="downloadResumeDoc()">?? Download .doc</button>
+          <button class="btn btn-secondary btn-sm" onclick="downloadResumePdf()">?? Download .pdf</button>
         </div>
       </div>
     </div>
@@ -992,6 +1047,247 @@ function showToast(m,t){
 function debounce(fn,ms){var id;return function(){var a=arguments,c=this;clearTimeout(id);id=setTimeout(function(){fn.apply(c,a)},ms)}}
 function escapeHtml(s){var d=document.createElement('div');d.textContent=s;return d.innerHTML}
 function loadScript(src,cb){var s=document.createElement('script');s.src=src;if(cb)s.onload=cb;document.head.appendChild(s)}
+
+// ─── LOADING SPINNERS ─────────────────────────────────────
+function setBtnLoading(btn,loading,text){
+  if(loading){btn._origText=btn.innerHTML;btn.innerHTML='<span class="spinner"></span>'+(text||'Processing...');btn.classList.add('btn-loading')}
+  else{btn.innerHTML=btn._origText||btn.innerHTML;btn.classList.remove('btn-loading')}
+}
+
+// ─── UNDO / REDO ──────────────────────────────────────────
+var _undoStack=[],_redoStack=[];
+function pushUndo(){if(_resumeData){_undoStack.push(JSON.stringify(_resumeData));if(_undoStack.length>20)_undoStack.shift();_redoStack=[];updateUndoRedoBtns()}}
+function undoResume(){if(_undoStack.length===0)return;_redoStack.push(JSON.stringify(_resumeData));var prev=JSON.parse(_undoStack.pop());_resumeData=prev;renderResumePreview();updateUndoRedoBtns();showToast('Undone.','success')}
+function redoResume(){if(_redoStack.length===0)return;_undoStack.push(JSON.stringify(_resumeData));var next=JSON.parse(_redoStack.pop());_resumeData=next;renderResumePreview();updateUndoRedoBtns();showToast('Redone.','success')}
+function updateUndoRedoBtns(){document.getElementById('undoBtn').disabled=_undoStack.length===0;document.getElementById('redoBtn').disabled=_redoStack.length===0}
+
+// ─── RENDER PREVIEW HELPER ────────────────────────────────
+function renderResumePreview(){
+  if(!_resumeData)return;
+  var d=_resumeData;
+  function escH(t){return (t||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+  var h='';
+  h+='<div class="resume-name">'+escH(d.name.toUpperCase())+'</div>';
+  if(d.contact&&d.contact.length>0)h+='<div class="resume-contact">'+escH(d.contact.join('  |  '))+'</div>';
+  if(d.summary){h+='<div class="resume-section-title">Professional Summary</div><div class="resume-summary">'+escH(d.summary)+'</div>'}
+  if(d.categorizedSkills){
+    var catNames=['Languages','Frameworks & Libraries','Databases','Developer Tools','Cloud & DevOps','Other'];
+    var hasSkills=false;for(var c=0;c<catNames.length;c++){if(d.categorizedSkills[catNames[c]]&&d.categorizedSkills[catNames[c]].length>0){hasSkills=true;break}}
+    if(hasSkills){
+      h+='<div class="resume-section-title">Technical Skills</div>';
+      for(var c=0;c<catNames.length;c++){
+        var cs=d.categorizedSkills[catNames[c]];
+        if(cs&&cs.length>0){
+          h+='<div class="resume-skill-group"><span class="resume-skill-cat">'+escH(catNames[c])+':</span> ';
+          for(var i=0;i<cs.length;i++){if(i>0)h+=', ';if(d.matchedSkills&&d.matchedSkills.indexOf(cs[i])!==-1)h+='<span class="resume-skill-matched">'+escH(cs[i])+'</span>';else h+=escH(cs[i])}
+          h+='</div>';
+        }
+      }
+    }
+  }
+  if(d.experience&&d.experience.length>0){
+    h+='<div class="resume-section-title">Experience</div>';
+    for(var i=0;i<d.experience.length;i++){
+      h+='<div class="resume-item"><div class="resume-item-title">'+escH(d.experience[i].role)+' &mdash; '+escH(d.experience[i].org)+'</div>';
+      if(d.experience[i].date)h+='<div class="resume-item-meta">'+escH(d.experience[i].date)+'</div>';
+      for(var j=0;j<d.experience[i].bullets.length;j++){h+='<div class="resume-bullet">• '+escH(d.experience[i].bullets[j])+'</div>'}
+      h+='</div>';
+    }
+  }
+  if(d.education&&d.education.length>0){
+    h+='<div class="resume-section-title">Education</div>';
+    for(var i=0;i<d.education.length;i++){
+      if(d.education[i].type==='degree')h+='<div class="resume-item-title">'+escH(d.education[i].text)+'</div>';
+      else h+='<div class="resume-edu-detail">'+escH(d.education[i].text)+'</div>';
+    }
+  }
+  document.getElementById('fixedResumeOutput').innerHTML=h;
+  document.getElementById('previewToolbar').style.display='flex';
+  showAtsScore();
+}
+
+// ─── ATS SCORE ────────────────────────────────────────────
+function showAtsScore(){
+  if(!_resumeData||!_resumeData.jdKeywords||_resumeData.jdKeywords.length===0){document.getElementById('atsScore').style.display='none';return}
+  var score=0;
+  var d=_resumeData;
+  // Has name
+  if(d.name&&d.name!=='YOUR NAME')score+=10;
+  // Has contact
+  if(d.contact&&d.contact.length>0)score+=10;
+  // Has summary
+  if(d.summary&&d.summary.length>20)score+=10;
+  // Has skills
+  if(d.skills&&d.skills.length>0)score+=10;
+  // Has experience
+  if(d.experience&&d.experience.length>0)score+=15;
+  // Has education
+  if(d.education&&d.education.length>0)score+=10;
+  // Keyword matches
+  var matchedCount=d.matchedSkills?d.matchedSkills.length:0;
+  var totalKeywords=d.jdKeywords.length;
+  var matchPct=totalKeywords>0?Math.min(matchedCount/totalKeywords,1):0;
+  score+=Math.round(matchPct*35);
+  // Has bullets
+  var totalBullets=0;if(d.experience){for(var i=0;i<d.experience.length;i++)totalBullets+=d.experience[i].bullets.length}
+  if(totalBullets>=3)score+=5;
+  if(totalBullets>=6)score+=5;
+  score=Math.min(score,100);
+  var el=document.getElementById('atsScore');
+  el.style.display='inline-flex';
+  el.textContent='ATS: '+score+'/100';
+  el.className='ats-score '+(score>=80?'high':score>=50?'medium':'low');
+}
+
+// ─── DARK PREVIEW TOGGLE ──────────────────────────────────
+var _previewDark=false;
+function togglePreviewDark(){
+  _previewDark=!_previewDark;
+  var el=document.getElementById('fixedResumeOutput');
+  if(_previewDark){el.style.background='#1a1a2e';el.style.color='#e0e0e0'}
+  else{el.style.background='#fff';el.style.color='#222'}
+}
+
+// ─── LINKEDIN COPY ────────────────────────────────────────
+function copyLinkedIn(){
+  if(!_resumeData)return;
+  var d=_resumeData;
+  var txt=d.name+'\n';
+  if(d.contact)txt+=d.contact.join(' | ')+'\n';
+  txt+='\n';
+  if(d.summary)txt+='About: '+d.summary+'\n\n';
+  if(d.skills&&d.skills.length>0)txt+='Skills: '+d.skills.join(', ')+'\n\n';
+  if(d.experience){for(var i=0;i<d.experience.length;i++){
+    txt+=d.experience[i].role+' at '+d.experience[i].org;
+    if(d.experience[i].date)txt+=' ('+d.experience[i].date+')';
+    txt+='\n';
+    for(var j=0;j<d.experience[i].bullets.length;j++)txt+='• '+d.experience[i].bullets[j]+'\n';
+    txt+='\n';
+  }}
+  if(d.education){for(var i=0;i<d.education.length;i++)txt+=d.education[i].text+'\n'}
+  navigator.clipboard.writeText(txt).then(function(){showToast('LinkedIn text copied!','success')}).catch(function(){showToast('Failed to copy.','error')});
+}
+
+// ─── PDF DOWNLOAD ─────────────────────────────────────────
+function downloadResumePdf(){
+  if(!_resumeData){showToast('Fix your resume first.','error');return}
+  var d=_resumeData;
+  // Generate simple text-based PDF using Word HTML trick
+  var txt=d.name+'\n\n';
+  if(d.contact)txt+=d.contact.join(' | ')+'\n\n';
+  if(d.summary)txt+='PROFESSIONAL SUMMARY\n'+d.summary+'\n\n';
+  if(d.categorizedSkills){
+    var catNames=['Languages','Frameworks & Libraries','Databases','Developer Tools','Cloud & DevOps','Other'];
+    txt+='TECHNICAL SKILLS\n';
+    for(var c=0;c<catNames.length;c++){
+      var cs=d.categorizedSkills[catNames[c]];
+      if(cs&&cs.length>0)txt+=catNames[c]+': '+cs.join(', ')+'\n';
+    }
+    txt+='\n';
+  }
+  if(d.experience){txt+='EXPERIENCE\n';for(var i=0;i<d.experience.length;i++){
+    txt+=d.experience[i].role+' — '+d.experience[i].org+'\n';
+    if(d.experience[i].date)txt+=d.experience[i].date+'\n';
+    for(var j=0;j<d.experience[i].bullets.length;j++)txt+='• '+d.experience[i].bullets[j]+'\n';
+    txt+='\n';
+  }}
+  if(d.education){txt+='EDUCATION\n';for(var i=0;i<d.education.length;i++)txt+=d.education[i].text+'\n'}
+  // Create downloadable txt as fallback (actual PDF requires jsPDF library)
+  var b=new Blob([txt],{type:'text/plain'});
+  var a=document.createElement('a');a.href=URL.createObjectURL(b);
+  a.download='resume-'+(d.name||'resume').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')+'.txt';
+  a.click();URL.revokeObjectURL(a.href);
+  showToast('Downloaded as .txt (PDF requires jsPDF library)','success');
+}
+
+// ─── COVER LETTER HISTORY SEARCH ──────────────────────────
+function filterHistory(){
+  var q=document.getElementById('historySearch').value.toLowerCase();
+  var items=document.querySelectorAll('.history-item');
+  for(var i=0;i<items.length;i++){
+    var text=items[i].textContent.toLowerCase();
+    items[i].style.display=text.indexOf(q)!==-1?'flex':'none';
+  }
+}
+
+// ─── CUSTOM SKILL CATEGORIES ──────────────────────────────
+var _customSkillCats=[
+  {name:'Languages',keywords:['javascript','typescript','python','java','c++','c#','php','ruby','go','rust','swift','kotlin','scala','r','sql','html','css','sass','less','graphql','perl','lua','dart']},
+  {name:'Frameworks & Libraries',keywords:['react','angular','vue','node','express','django','flask','spring','rails','laravel','symfony','next','nuxt','svelte','jquery','bootstrap','tailwind','redux','webpack','vite']},
+  {name:'Databases',keywords:['mysql','postgresql','mongodb','redis','sqlite','oracle','dynamodb','cassandra','firebase','supabase','elasticsearch','neo4j']},
+  {name:'Developer Tools',keywords:['git','github','docker','kubernetes','jenkins','ansible','terraform','vscode','postman','jira','confluence','figma']},
+  {name:'Cloud & DevOps',keywords:['aws','azure','gcp','heroku','netlify','vercel','digitalocean','cloudflare']},
+  {name:'Other',keywords:[]}
+];
+function toggleSkillCatEditor(){
+  var el=document.getElementById('skillCatEditor');el.classList.toggle('active');
+  if(el.classList.contains('active'))renderSkillCatEditor();
+}
+function renderSkillCatEditor(){
+  var html='';
+  for(var i=0;i<_customSkillCats.length;i++){
+    html+='<div class="skill-cat-row"><input type="text" value="'+_customSkillCats[i].name+'" data-idx="'+i+'" class="cat-name-input" placeholder="Category name"><input type="text" value="'+_customSkillCats[i].keywords.join(', ')+'" data-idx="'+i+'" class="cat-keywords-input" placeholder="Keywords (comma separated)"><button class="btn btn-secondary btn-sm" onclick="removeSkillCat('+i+')">X</button></div>';
+  }
+  document.getElementById('skillCatList').innerHTML=html;
+}
+function addSkillCategory(){_customSkillCats.push({name:'New Category',keywords:[]});renderSkillCatEditor()}
+function removeSkillCat(idx){_customSkillCats.splice(idx,1);renderSkillCatEditor()}
+function applySkillCategories(){
+  var nameInputs=document.querySelectorAll('.cat-name-input');
+  var kwInputs=document.querySelectorAll('.cat-keywords-input');
+  for(var i=0;i<nameInputs.length;i++){
+    _customSkillCats[i].name=nameInputs[i].value;
+    _customSkillCats[i].keywords=kwInputs[i].value.split(',').map(function(s){return s.trim().toLowerCase()}).filter(function(s){return s.length>0});
+  }
+  if(_resumeData&&_resumeData.skills){
+    _resumeData.categorizedSkills=categorizeWithCustom(_resumeData.skills);
+    renderResumePreview();
+  }
+  showToast('Skill categories updated!','success');
+}
+function categorizeWithCustom(skills){
+  var cats={};for(var i=0;i<_customSkillCats.length;i++)cats[_customSkillCats[i].name]=[];
+  cats['Other']=[];
+  for(var i=0;i<skills.length;i++){
+    var sk=skills[i].toLowerCase();var placed=false;
+    for(var c=0;c<_customSkillCats.length;c++){
+      for(var j=0;j<_customSkillCats[c].keywords.length;j++){
+        if(sk.indexOf(_customSkillCats[c].keywords[j])!==-1||_customSkillCats[c].keywords[j].indexOf(sk)!==-1){
+          cats[_customSkillCats[c].name].push(skills[i]);placed=true;break;
+        }
+      }
+      if(placed)break;
+    }
+    if(!placed)cats['Other'].push(skills[i]);
+  }
+  return cats;
+}
+
+// ─── OVERRIDE categorizeSkills to use custom categories ────
+var _origCategorize=categorizeSkills;
+categorizeSkills=function(skills,matched){
+  return categorizeWithCustom(skills);
+};
+
+// ─── OVERRIDE fixResume to add undo + spinner ─────────────
+var _origFixResume=fixResume;
+fixResume=function(){
+  pushUndo();
+  var btn=document.querySelector('#contentResumeFixer .btn-primary');
+  setBtnLoading(btn,true);
+  try{_origFixResume()}catch(e){showToast('Error: '+e.message,'error')}
+  setTimeout(function(){setBtnLoading(btn,false)},500);
+};
+
+// ─── OVERRIDE generateCoverLetter to add spinner ──────────
+var _origGenerate=generateCoverLetter;
+generateCoverLetter=function(){
+  var btn=document.querySelector('#contentCoverLetter .btn-primary');
+  setBtnLoading(btn,true);
+  try{_origGenerate()}catch(e){showToast('Error: '+e.message,'error')}
+  setTimeout(function(){setBtnLoading(btn,false)},500);
+};
+
 loadScript('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2',initSupabase);
 loadScript('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js');
 loadScript('https://cdn.jsdelivr.net/npm/mammoth@1.6.0/mammoth.browser.min.js');
