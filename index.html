@@ -82,16 +82,15 @@ textarea.letter-output{min-height:350px;font-family:Georgia,'Times New Roman',se
 .fixed-resume-output{background:#fff;color:#222;font-family:Garamond,Georgia,'Times New Roman',serif;font-size:10.5pt;line-height:1.4;padding:36px 32px;border-radius:var(--radius-sm);min-height:500px;overflow-y:auto;max-height:700px}
 .fixed-resume-output .resume-name{font-size:22pt;font-weight:400;text-align:center;margin-bottom:2px;color:#000;letter-spacing:1px}
 .fixed-resume-output .resume-contact{text-align:center;font-size:9.5pt;color:#444;margin-bottom:14px;letter-spacing:0.3px}
-.fixed-resume-output .resume-section-title{font-family:Calibri,Arial,sans-serif;font-size:10.5pt;font-weight:700;text-transform:uppercase;letter-spacing:1px;border-bottom:1.5px solid #000;padding-bottom:2px;margin-top:14px;margin-bottom:5px;color:#000}
+.fixed-resume-output .resume-section-title{font-family:Calibri,Arial,sans-serif;font-size:10.5pt;font-weight:700;letter-spacing:1px;border-bottom:1.5px solid #000;padding-bottom:2px;margin-top:14px;margin-bottom:5px;color:#000}
 .fixed-resume-output .resume-item-title{font-weight:700;font-size:10.5pt;color:#000;margin:6px 0 0 0}
 .fixed-resume-output .resume-item-meta{font-size:10pt;color:#444;font-style:italic}
 .fixed-resume-output .resume-item{margin-bottom:6px}
 .fixed-resume-output .resume-bullet{margin-left:18px;font-size:10pt;line-height:1.4;text-indent:-9pt;padding-left:9pt}
 .fixed-resume-output .resume-summary{font-size:10.5pt;line-height:1.45;margin-bottom:4px;color:#222}
 .fixed-resume-output .resume-skill-matched{background:#dbeafe;color:#1e40af;font-weight:600;padding:0 3px;border-radius:2px}
-.fixed-resume-output .resume-skills-line{font-size:10pt;line-height:1.5}
-.fixed-resume-output .resume-skill-item{display:inline}
-.fixed-resume-output .resume-skill-sep{display:inline;color:#888;margin:0 5px}
+.fixed-resume-output .resume-skill-group{font-size:10pt;line-height:1.5;margin:2px 0}
+.fixed-resume-output .resume-skill-cat{font-weight:700;color:#000}
 .config-notice{background:rgba(251,191,36,.1);border:1px solid rgba(251,191,36,.3);border-radius:var(--radius-sm);padding:16px;margin-bottom:20px;font-size:.85rem;color:#fbbf24;display:none}
 .toast{position:fixed;bottom:24px;right:24px;background:var(--card);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px 20px;font-size:.875rem;color:var(--text-bright);box-shadow:0 8px 32px rgba(0,0,0,.4);z-index:2000;display:none;animation:slideIn .3s ease}
 .toast.show{display:block}
@@ -614,6 +613,38 @@ function parseExpBlocks(lines){
 }
 var _resumeData=null;
 
+function categorizeSkills(skills,matched){
+  var cats={'Languages':[],'Frameworks & Libraries':[],'Databases':[],'Developer Tools':[],'Cloud & DevOps':[],'Other':[]};
+  var langKw=['javascript','typescript','python','java','c\\+\\+','c#','php','ruby','go','rust','swift','kotlin','scala','r','sql','html','css','sass','less','graphql','perl','lua','matlab','objective-c','dart','elixir','haskell','clojure','assembly','cobol','fortran','vba'];
+  var fwKw=['react','angular','vue','node','express','django','flask','spring','rails','laravel','symfony','next','nuxt','svelte','jquery','bootstrap','tailwind','material','redux','vuex','ember','backbone','angularjs','fastapi','fastify','nest\\.js','ember\\.js','gatsby','webpack','vite','babel','npm','yarn','pnpm'];
+  var dbKw=['mysql','postgresql','postgres','mongodb','mongo','redis','sqlite','oracle','sql server','dynamodb','cassandra','couchdb','firebase','supabase','elasticsearch','neo4j','mariadb','realm','pouchdb','influxdb'];
+  var toolKw=['git','github','gitlab','bitbucket','docker','kubernetes','k8s','jenkins','travis','circleci','ansible','terraform','vagrant','vim','vscode','visual studio','intellij','eclipse','postman','swagger','jira','confluence','slack','trello','notion','figma','photoshop','illustrator'];
+  var cloudKw=['aws','amazon','azure','gcp','google cloud','heroku','netlify','vercel','digitalocean','linode','cloudflare','firebase','supabase','docker','kubernetes'];
+
+  for(var i=0;i<skills.length;i++){
+    var sk=skills[i].toLowerCase();
+    var placed=false;
+    // Check languages
+    for(var j=0;j<langKw.length;j++){if(sk.match(new RegExp(langKw[j],'i'))){cats['Languages'].push(skills[i]);placed=true;break}}
+    if(placed)continue;
+    // Check frameworks
+    for(var j=0;j<fwKw.length;j++){if(sk.match(new RegExp(fwKw[j],'i'))){cats['Frameworks & Libraries'].push(skills[i]);placed=true;break}}
+    if(placed)continue;
+    // Check databases
+    for(var j=0;j<dbKw.length;j++){if(sk.match(new RegExp(dbKw[j],'i'))){cats['Databases'].push(skills[i]);placed=true;break}}
+    if(placed)continue;
+    // Check tools
+    for(var j=0;j<toolKw.length;j++){if(sk.match(new RegExp(toolKw[j],'i'))){cats['Developer Tools'].push(skills[i]);placed=true;break}}
+    if(placed)continue;
+    // Check cloud
+    for(var j=0;j<cloudKw.length;j++){if(sk.match(new RegExp(cloudKw[j],'i'))){cats['Cloud & DevOps'].push(skills[i]);placed=true;break}}
+    if(placed)continue;
+    // Default to Other
+    cats['Other'].push(skills[i]);
+  }
+  return cats
+}
+
 function fixResume(){
   var resume=document.getElementById('resumeInput').value.trim(),jd=document.getElementById('jdInput').value.trim();
   if(!resume){showToast('Paste or upload a resume first.','error');return}
@@ -663,35 +694,42 @@ function fixResume(){
   var contactParts=[];if(emailStr)contactParts.push(emailStr);if(phoneStr)contactParts.push(phoneStr);linkEls.forEach(function(l){contactParts.push(l)});
 
   // Store structured data for .doc export
+  var categorizedSkills=categorizeSkills(sortedSkills,matchedSkills);
   _resumeData={
     name:nameStr, contact:contactParts, summary:sections.summary,
-    skills:sortedSkills, matchedSkills:matchedSkills,
+    skills:sortedSkills, matchedSkills:matchedSkills, categorizedSkills:categorizedSkills,
     experience:expBlocks, education:eduLines, other:sections.other,
     jdKeywords:jdKeywords
   };
 
   // ─── RENDER PREVIEW ─────────────────────────────────────
-  function escH(t){return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
-  function hl(t){var r=escH(t);for(var i=0;i<jdKeywords.length;i++){var kw=jdKeywords[i],re=new RegExp('\\b('+kw.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')\\b','gi');r=r.replace(re,'<span class="resume-skill-matched">$1</span>')}return r}
+  function escH(t){return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
 
   var h='';
   h+='<div class="resume-name">'+escH(nameStr.toUpperCase())+'</div>';
   if(contactParts.length>0)h+='<div class="resume-contact">'+escH(contactParts.join('  |  '))+'</div>';
 
-  if(sections.summary){h+='<div class="resume-section-title">PROFESSIONAL SUMMARY</div><div class="resume-summary">'+escH(sections.summary)+'</div>'}
+  if(sections.summary){h+='<div class="resume-section-title">Professional Summary</div><div class="resume-summary">'+escH(sections.summary)+'</div>'}
 
   if(sortedSkills.length>0){
-    h+='<div class="resume-section-title">SKILLS</div><div class="resume-skills-line">';
-    for(var i=0;i<sortedSkills.length;i++){
-      if(i>0)h+='<span class="resume-skill-sep">•</span>';
-      if(matchedSkills.indexOf(sortedSkills[i])!==-1)h+='<span class="resume-skill-item resume-skill-matched">'+escH(sortedSkills[i])+'</span>';
-      else h+='<span class="resume-skill-item">'+escH(sortedSkills[i])+'</span>';
+    h+='<div class="resume-section-title">Technical Skills</div>';
+    var catNames=['Languages','Frameworks & Libraries','Databases','Developer Tools','Cloud & DevOps','Other'];
+    for(var c=0;c<catNames.length;c++){
+      var catSkills=categorizedSkills[catNames[c]];
+      if(catSkills&&catSkills.length>0){
+        h+='<div class="resume-skill-group"><span class="resume-skill-cat">'+escH(catNames[c])+':</span> ';
+        for(var i=0;i<catSkills.length;i++){
+          if(i>0)h+=', ';
+          if(matchedSkills.indexOf(catSkills[i])!==-1)h+='<span class="resume-skill-matched">'+escH(catSkills[i])+'</span>';
+          else h+=escH(catSkills[i]);
+        }
+        h+='</div>';
+      }
     }
-    h+='</div>'
   }
 
   if(expBlocks.length>0){
-    h+='<div class="resume-section-title">EXPERIENCE</div>';
+    h+='<div class="resume-section-title">Experience</div>';
     for(var i=0;i<expBlocks.length;i++){
       h+='<div class="resume-item"><div class="resume-item-title">'+escH(expBlocks[i].role)+' &mdash; '+escH(expBlocks[i].org)+'</div>';
       if(expBlocks[i].date)h+='<div class="resume-item-meta">'+escH(expBlocks[i].date)+'</div>';
@@ -701,7 +739,7 @@ function fixResume(){
   }
 
   if(eduLines.length>0){
-    h+='<div class="resume-section-title">EDUCATION</div>';
+    h+='<div class="resume-section-title">Education</div>';
     for(var i=0;i<eduLines.length;i++){
       if(eduLines[i].type==='degree')h+='<div class="resume-item-title" style="margin:0 0 1px 0;">'+escH(eduLines[i].text)+'</div>';
       else h+='<div style="margin:0 0 2px 0;font-size:10pt;color:#333;">'+escH(eduLines[i].text)+'</div>';
@@ -709,7 +747,7 @@ function fixResume(){
   }
 
   if(sections.other.length>0&&(sections.other.join(' ').match(/certif|project|award|honor|language|volunteer|publication/i))){
-    h+='<div class="resume-section-title">ADDITIONAL</div>';
+    h+='<div class="resume-section-title">Additional</div>';
     for(var i=0;i<Math.min(sections.other.length,6);i++)h+='<div style="margin:0 0 1px 0;font-size:10pt;">'+escH(sections.other[i])+'</div>'
   }
 
@@ -731,7 +769,7 @@ function downloadResumeDoc(){
   var S={
     name:'font-family:Garamond,Georgia,serif;font-size:22pt;font-weight:400;text-align:center;color:#000;margin:0 0 2pt 0;letter-spacing:1pt;',
     contact:'font-family:Calibri,Arial,sans-serif;font-size:9.5pt;text-align:center;color:#444;margin:0 0 14pt 0;letter-spacing:0.3pt;',
-    sectionHeader:'font-family:Calibri,Arial,sans-serif;font-size:10.5pt;font-weight:700;text-transform:uppercase;letter-spacing:1pt;color:#000;margin:14pt 0 0 0;padding-bottom:2pt;border-bottom:1.5pt solid #000;',
+    sectionHeader:'font-family:Calibri,Arial,sans-serif;font-size:10.5pt;font-weight:700;letter-spacing:1pt;color:#000;margin:14pt 0 0 0;padding-bottom:2pt;border-bottom:1.5pt solid #000;',
     summary:'font-family:Garamond,Georgia,serif;font-size:10.5pt;color:#222;line-height:1.45;margin:3pt 0 0 0;',
     expTitle:'font-family:Garamond,Georgia,serif;font-size:10.5pt;font-weight:700;color:#000;margin:7pt 0 0 0;',
     expDate:'font-family:Garamond,Georgia,serif;font-size:10pt;color:#444;font-style:italic;margin:0 0 1pt 0;',
@@ -766,12 +804,20 @@ function downloadResumeDoc(){
   // ─── SKILLS ────────────────────────────────────────────
   if(d.skills.length>0){
     body+='<p style="'+S.sectionHeader+'">Technical Skills</p>';
-    var skillHtml='';
-    for(var i=0;i<d.skills.length;i++){
-      if(i>0)skillHtml+=' <span style="color:#888;margin:0 4pt;">•</span> ';
-      skillHtml+=e(d.skills[i]);
+    var catNames=['Languages','Frameworks & Libraries','Databases','Developer Tools','Cloud & DevOps','Other'];
+    var skillFont='font-family:Garamond,Georgia,serif;font-size:10pt;color:#222;line-height:1.5;';
+    var catFont='font-family:Garamond,Georgia,serif;font-size:10pt;font-weight:700;color:#000;';
+    for(var c=0;c<catNames.length;c++){
+      var catSkills=d.categorizedSkills[catNames[c]];
+      if(catSkills&&catSkills.length>0){
+        var line='<span style="'+catFont+'">'+e(catNames[c])+':</span> ';
+        for(var i=0;i<catSkills.length;i++){
+          if(i>0)line+=', ';
+          line+=e(catSkills[i]);
+        }
+        body+='<p style="'+skillFont+'margin:2pt 0 0 0;">'+line+'</p>';
+      }
     }
-    body+='<p style="'+S.skillLine+'">'+skillHtml+'</p>';
   }
 
   // ─── EXPERIENCE ────────────────────────────────────────
