@@ -52,11 +52,11 @@ textarea.letter-output{min-height:350px;font-family:Georgia,'Times New Roman',se
 .output-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
 .upload-zone{border:2px dashed var(--border);border-radius:var(--radius-sm);padding:24px;text-align:center;cursor:pointer;transition:all .2s;margin-bottom:10px;position:relative}
 .upload-zone:hover,.upload-zone.dragover{border-color:var(--accent);background:rgba(59,130,246,.05)}
-.upload-zone .icon{font-size:2rem;margin-bottom:8px}
-.upload-zone .text{font-size:.85rem;color:var(--text-dim)}
-.upload-zone .hint{font-size:.75rem;color:var(--text-dim);margin-top:4px;opacity:.6}
-.upload-zone input[type="file"]{position:absolute;inset:0;opacity:0;cursor:pointer}
-.upload-status{display:none;font-size:.8rem;padding:6px 12px;border-radius:var(--radius-sm);margin-bottom:10px;align-items:center;gap:8px}
+.upload-zone .icon{font-size:2rem;margin-bottom:8px;pointer-events:none}
+.upload-zone .text{font-size:.85rem;color:var(--text-dim);pointer-events:none}
+.upload-zone .hint{font-size:.75rem;color:var(--text-dim);margin-top:4px;opacity:.6;pointer-events:none}
+.upload-zone input[type="file"]{position:absolute;top:0;left:0;width:100%;height:100%;opacity:0;cursor:pointer;z-index:2}
+.upload-status{display:none;font-size:.8rem;padding:6px 12px;border-radius:var(--radius-sm);margin-bottom:10px;align-items:center;gap:8px;position:relative;z-index:3}
 .upload-status.show{display:flex}
 .upload-status.success{background:rgba(16,185,129,.1);color:var(--green);border:1px solid rgba(16,185,129,.3)}
 .upload-status.error{background:rgba(239,68,68,.1);color:var(--red);border:1px solid rgba(239,68,68,.3)}
@@ -340,8 +340,11 @@ function handleFile(f){
       if(typeof pdfjsLib==='undefined'){setUploadStatus('PDF lib not loaded.','error');return}
       return pdfjsLib.getDocument({data:buf}).promise;
     }).then(function(pdf){
-      var ps=[];for(var i=1;i<=pdf.numPages;i++)ps.push(pdf.getPage(i).then(function(p){return p.getTextContent().then(function(c){return c.items.map(function(x){return x.str}).join(' ')})}));
-      return Promise.all(ps).then(function(p){return p.join('\n\n')});
+      var ps=[];for(var i=1;i<=pdf.numPages;i++)ps.push(pdf.getPage(i).then(function(p){return p.getTextContent().then(function(c){
+        var line='';for(var j=0;j<c.items.length;j++){line+=c.items[j].str;if(c.items[j].hasEOL)line+='\n';else if(j<c.items.length-1)line+=' '}
+        return line;
+      })}));
+      return Promise.all(ps).then(function(p){return p.join('\n')});
     }).then(function(t){document.getElementById('resumeInput').value=t;setUploadStatus('Loaded '+f.name,'success');setTimeout(hideUploadStatus,3000)}).catch(function(){setUploadStatus('Failed to read PDF.','error')})
   }else if(ext==='docx'){
     setUploadStatus('Extracting DOCX...','loading');
@@ -355,7 +358,6 @@ fileInput.addEventListener('change',function(e){if(e.target.files&&e.target.file
 uploadZone.addEventListener('dragover',function(e){e.preventDefault();uploadZone.classList.add('dragover')});
 uploadZone.addEventListener('dragleave',function(){uploadZone.classList.remove('dragover')});
 uploadZone.addEventListener('drop',function(e){e.preventDefault();uploadZone.classList.remove('dragover');if(e.dataTransfer.files&&e.dataTransfer.files[0])handleFile(e.dataTransfer.files[0])});
-uploadZone.addEventListener('click',function(){fileInput.click()});
 
 // ─── RESUME FIXER UPLOAD ZONE ─────────────────────────────
 var uploadZoneRF=document.getElementById('uploadZoneRF'),fileInputRF=document.getElementById('fileInputRF'),uploadStatusRF=document.getElementById('uploadStatusRF');
@@ -372,8 +374,11 @@ function handleFileRF(f){
       if(typeof pdfjsLib==='undefined'){setUploadStatusRF('PDF lib not loaded.','error');return}
       return pdfjsLib.getDocument({data:buf}).promise;
     }).then(function(pdf){
-      var ps=[];for(var i=1;i<=pdf.numPages;i++)ps.push(pdf.getPage(i).then(function(p){return p.getTextContent().then(function(c){return c.items.map(function(x){return x.str}).join(' ')})}));
-      return Promise.all(ps).then(function(p){return p.join('\n\n')});
+      var ps=[];for(var i=1;i<=pdf.numPages;i++)ps.push(pdf.getPage(i).then(function(p){return p.getTextContent().then(function(c){
+        var line='';for(var j=0;j<c.items.length;j++){line+=c.items[j].str;if(c.items[j].hasEOL)line+='\n';else if(j<c.items.length-1)line+=' '}
+        return line;
+      })}));
+      return Promise.all(ps).then(function(p){return p.join('\n')});
     }).then(function(t){_uploadedResume=t;setUploadStatusRF('Loaded '+f.name,'success');setTimeout(hideUploadStatusRF,3000)}).catch(function(){setUploadStatusRF('Failed to read PDF.','error')})
   }else if(ext==='docx'){
     setUploadStatusRF('Extracting DOCX...','loading');
@@ -387,7 +392,6 @@ fileInputRF.addEventListener('change',function(e){if(e.target.files&&e.target.fi
 uploadZoneRF.addEventListener('dragover',function(e){e.preventDefault();uploadZoneRF.classList.add('dragover')});
 uploadZoneRF.addEventListener('dragleave',function(){uploadZoneRF.classList.remove('dragover')});
 uploadZoneRF.addEventListener('drop',function(e){e.preventDefault();uploadZoneRF.classList.remove('dragover');if(e.dataTransfer.files&&e.dataTransfer.files[0])handleFileRF(e.dataTransfer.files[0])});
-uploadZoneRF.addEventListener('click',function(){fileInputRF.click()});
 function clearResumeFixer(){
   _uploadedResume='';
   document.getElementById('jdInputRF').value='';
@@ -968,7 +972,7 @@ function downloadResumeDoc(){
 
   var b=new Blob([h],{type:'application/msword'}),a=document.createElement('a');
   a.href=URL.createObjectURL(b);
-  a.download='resume-'+d.name.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')+'.doc';
+  a.download='resume-'+(d.name||'resume').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')+'.doc';
   a.click();
   URL.revokeObjectURL(a.href);
 }
