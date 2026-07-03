@@ -872,9 +872,25 @@ function downloadDoc() {
   if (!text || text === document.getElementById('letterOutput').placeholder) {
     showToast('Generate a cover letter first.', 'error'); return;
   }
-  var escaped = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-  const html = '<html><body style="font-family:Georgia,serif;font-size:12pt;line-height:1.6;max-width:600px;margin:40px auto;">' +
-    '<pre style="font-family:Georgia,serif;white-space:pre-wrap;word-wrap:break-word;">' + escaped + '</pre></body></html>';
+  var lines = text.split('\n');
+  var bodyHtml = '';
+  for (var i = 0; i < lines.length; i++) {
+    var line = lines[i].trim();
+    if (line === '') {
+      bodyHtml += '<p>&nbsp;</p>';
+    } else if (line.match(/^[—\-=]{3,}/)) {
+      bodyHtml += '<hr style="border:none;border-top:1px solid #333;margin:6px 0;">';
+    } else {
+      bodyHtml += '<p style="margin:0 0 2px 0;line-height:1.5;">' + escapeHtml(line) + '</p>';
+    }
+  }
+  const html = '<!DOCTYPE html>' +
+    '<html><head><meta charset="UTF-8"><title>Cover Letter</title>' +
+    '<style>' +
+      'body { font-family: Georgia, "Times New Roman", serif; font-size: 12pt; color: #000; ' +
+        'max-width: 500px; margin: 40px auto; padding: 0 20px; }' +
+      'p { margin:0 0 2px 0; line-height:1.5; }' +
+    '</style></head><body>' + bodyHtml + '</body></html>';
   const blob = new Blob([html], { type: 'application/msword' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
