@@ -440,84 +440,159 @@ function parseExpBlocks(lines){
   }
   if(cur)blocks.push(cur);return blocks
 }
+var _resumeData=null;
+
 function fixResume(){
   var resume=document.getElementById('resumeInput').value.trim(),jd=document.getElementById('jdInput').value.trim();
   if(!resume){showToast('Paste or upload a resume first.','error');return}
   var jdKeywords=jd?extractSkills(jd):[],jdLower=jdKeywords.map(function(s){return s.toLowerCase()});
   var sections=parseResumeSections(resume);
-  var allSkillLines=sections.skills.join(',').split(/[,;�\n|/]/).map(function(s){return s.trim()}).filter(function(s){return s.length>1});
+  var allSkillLines=sections.skills.join(',').split(/[,;•\n|/]/).map(function(s){return s.trim()}).filter(function(s){return s.length>1});
   var allSkills=allSkillLines.map(function(s){return s.charAt(0).toUpperCase()+s.slice(1)});
-  var matchedSkills=[],unmatchedSkills=[];
+  var matchedSkills=[],unmatchedSkills=[],skillSet=new Set();
   for(var i=0;i<allSkills.length;i++){
     var isMatch=false;
     for(var j=0;j<jdLower.length;j++){if(allSkills[i].toLowerCase().includes(jdLower[j])||jdLower[j].includes(allSkills[i].toLowerCase())){isMatch=true;break}}
     if(!isMatch){for(var j=0;j<jdKeywords.length;j++){var kw=jdKeywords[j].toLowerCase();if(allSkills[i].toLowerCase().includes(kw)||kw.includes(allSkills[i].toLowerCase())){isMatch=true;break}}}
-    if(isMatch)matchedSkills.push(allSkills[i]);else unmatchedSkills.push(allSkills[i])
+    if(isMatch){if(!skillSet.has(allSkills[i].toLowerCase())){skillSet.add(allSkills[i].toLowerCase());matchedSkills.push(allSkills[i])}}
   }
-  var sortedSkills=[...new Set(matchedSkills.concat(unmatchedSkills))];
+  skillSet.clear();
+  for(var i=0;i<allSkills.length;i++){
+    var isMatch=false;
+    for(var j=0;j<jdLower.length;j++){if(allSkills[i].toLowerCase().includes(jdLower[j])||jdLower[j].includes(allSkills[i].toLowerCase())){isMatch=true;break}}
+    if(!isMatch){for(var j=0;j<jdKeywords.length;j++){var kw=jdKeywords[j].toLowerCase();if(allSkills[i].toLowerCase().includes(kw)||kw.includes(allSkills[i].toLowerCase())){isMatch=true;break}}}
+    if(!isMatch&&!skillSet.has(allSkills[i].toLowerCase())){skillSet.add(allSkills[i].toLowerCase());unmatchedSkills.push(allSkills[i])}
+  }
+  var sortedSkills=matchedSkills.concat(unmatchedSkills);
   var expBlocks=parseExpBlocks(sections.experience);
-  var nameEl=sections.contact.find(function(c){return c.type==='name'}),nameStr=nameEl?nameEl.value:document.getElementById('userName').value.trim()||'Your Name';
+
+  // Ensure education has structure
+  var eduLines=[];
+  for(var i=0;i<sections.education.length;i++){
+    var e=sections.education[i];
+    if(e.match(/Bachelor|Master|PhD|Associate|Degree|BS|BA|MS|MA|MBA|B\.S\.|B\.A\.|M\.S\.|M\.A\./i))eduLines.push({type:'degree',text:e});
+    else eduLines.push({type:'detail',text:e});
+  }
+
+  // Build contact
+  var nameEl=sections.contact.find(function(c){return c.type==='name'}),nameStr=nameEl?nameEl.value:document.getElementById('userName').value.trim()||'YOUR NAME';
   var emailEl=sections.contact.find(function(c){return c.type==='email'}),emailStr=emailEl?emailEl.value:document.getElementById('userEmailInput').value.trim();
   var phoneEl=sections.contact.find(function(c){return c.type==='phone'}),phoneStr=phoneEl?phoneEl.value:document.getElementById('userPhone').value.trim();
-  var links=sections.contact.filter(function(c){return c.type==='link'}).map(function(c){return c.value});
-  var contactParts=[];if(emailStr)contactParts.push(emailStr);if(phoneStr)contactParts.push(phoneStr);links.forEach(function(l){contactParts.push(l)});
-  var html='<div class="resume-name">'+esc(nameStr)+'</div>';
-  if(contactParts.length>0)html+='<div class="resume-contact">'+esc(contactParts.join('  |  '))+'</div>';
-  if(sections.summary){html+='<div class="resume-section-title">Professional Summary</div><div class="resume-summary">'+esc(sections.summary)+'</div>'}
+  var linkEls=sections.contact.filter(function(c){return c.type==='link'}).map(function(c){return c.value});
+  var contactParts=[];if(emailStr)contactParts.push(emailStr);if(phoneStr)contactParts.push(phoneStr);linkEls.forEach(function(l){contactParts.push(l)});
+
+  // Store structured data for .doc export
+  _resumeData={
+    name:nameStr, contact:contactParts, summary:sections.summary,
+    skills:sortedSkills, matchedSkills:matchedSkills,
+    experience:expBlocks, education:eduLines, other:sections.other,
+    jdKeywords:jdKeywords
+  };
+
+  // ─── RENDER PREVIEW ─────────────────────────────────────
+  function escH(t){return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+  function hl(t){var r=escH(t);for(var i=0;i<jdKeywords.length;i++){var kw=jdKeywords[i],re=new RegExp('\\b('+kw.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')\\b','gi');r=r.replace(re,'<span class="resume-skill-matched">$1</span>')}return r}
+
+  var h='';
+  h+='<div class="resume-name">'+escH(nameStr.toUpperCase())+'</div>';
+  if(contactParts.length>0)h+='<div class="resume-contact">'+escH(contactParts.join('  |  '))+'</div>';
+
+  if(sections.summary){h+='<div class="resume-section-title">PROFESSIONAL SUMMARY</div><div class="resume-summary">'+escH(sections.summary)+'</div>'}
+
   if(sortedSkills.length>0){
-    html+='<div class="resume-section-title">Skills</div><div class="resume-skills-line">';
-    for(var i=0;i<sortedSkills.length;i++){if(i>0)html+='  �  ';if(matchedSkills.indexOf(sortedSkills[i])!==-1)html+='<span class="resume-skill-matched">'+esc(sortedSkills[i])+'</span>';else html+=esc(sortedSkills[i])}
-    html+='</div>'
+    h+='<div class="resume-section-title">SKILLS</div><div class="resume-skills-line">';
+    for(var i=0;i<sortedSkills.length;i++){if(i>0)h+='  •  ';if(matchedSkills.indexOf(sortedSkills[i])!==-1)h+='<span class="resume-skill-matched">'+escH(sortedSkills[i])+'</span>';else h+=escH(sortedSkills[i])}
+    h+='</div>'
   }
+
   if(expBlocks.length>0){
-    html+='<div class="resume-section-title">Experience</div>';
+    h+='<div class="resume-section-title">EXPERIENCE</div>';
     for(var i=0;i<expBlocks.length;i++){
-      html+='<div class="resume-item"><div class="resume-item-title">'+esc(expBlocks[i].role)+' &mdash; '+esc(expBlocks[i].org)+'</div>';
-      if(expBlocks[i].date)html+='<div class="resume-item-meta">'+esc(expBlocks[i].date)+'</div>';
-      for(var j=0;j<expBlocks[i].bullets.length;j++)html+='<div class="resume-bullet">� '+highlightKW(expBlocks[i].bullets[j],jdKeywords)+'</div>';
-      html+='</div>'
+      h+='<div class="resume-item"><div class="resume-item-title">'+escH(expBlocks[i].role)+' &mdash; '+escH(expBlocks[i].org)+'</div>';
+      if(expBlocks[i].date)h+='<div class="resume-item-meta">'+escH(expBlocks[i].date)+'</div>';
+      for(var j=0;j<expBlocks[i].bullets.length;j++)h+='<div class="resume-bullet">• '+hl(expBlocks[i].bullets[j])+'</div>';
+      h+='</div>'
     }
   }
-  if(sections.education.length>0){
-    html+='<div class="resume-section-title">Education</div>';
-    for(var i=0;i<sections.education.length;i++){html+='<div class="resume-item">';if(sections.education[i].match(/Bachelor|Master|PhD|Associate|Degree|BS|BA|MS|MA|MBA|B\.S\.|B\.A\.|M\.S\.|M\.A\./i))html+='<div class="resume-item-title">'+esc(sections.education[i])+'</div>';else html+='<div class="resume-item-meta" style="font-style:normal;">'+esc(sections.education[i])+'</div>';html+='</div>'}
+
+  if(eduLines.length>0){
+    h+='<div class="resume-section-title">EDUCATION</div>';
+    for(var i=0;i<eduLines.length;i++){
+      if(eduLines[i].type==='degree')h+='<div class="resume-item-title" style="margin:0 0 1px 0;">'+escH(eduLines[i].text)+'</div>';
+      else h+='<div style="margin:0 0 2px 0;font-size:10pt;color:#333;">'+escH(eduLines[i].text)+'</div>';
+    }
   }
+
   if(sections.other.length>0&&(sections.other.join(' ').match(/certif|project|award|honor|language|volunteer|publication/i))){
-    html+='<div class="resume-section-title">Additional</div>';
-    for(var i=0;i<Math.min(sections.other.length,6);i++)html+='<div class="resume-bullet" style="margin-left:0;">'+esc(sections.other[i])+'</div>'
+    h+='<div class="resume-section-title">ADDITIONAL</div>';
+    for(var i=0;i<Math.min(sections.other.length,6);i++)h+='<div style="margin:0 0 1px 0;font-size:10pt;">'+escH(sections.other[i])+'</div>'
   }
-  document.getElementById('fixedResumeOutput').innerHTML=html;
+
+  document.getElementById('fixedResumeOutput').innerHTML=h;
   showToast('Resume fixed! Matched '+matchedSkills.length+' skills.','success')
 }
+
 function downloadResumeDoc(){
-  var el=document.getElementById('fixedResumeOutput');
-  if(!el||el.querySelector('.empty-state')){showToast('Fix your resume first.','error');return}
-  // Build clean inline-styled HTML for Word
-  var lines=el.innerText.split('\n'),body='',inSection=false;
-  for(var i=0;i<lines.length;i++){
-    var raw=lines[i].trim();if(!raw){body+='<p style="margin:0;line-height:1.0;">&nbsp;</p>';continue}
-    // Detect section headers (all caps, followed by underline-style or short)
-    if(raw===raw.toUpperCase()&&raw.length>3&&raw.length<40){
-      body+='<p style="margin:12pt 0 3pt 0;font-size:11pt;font-weight:700;text-transform:uppercase;letter-spacing:1pt;border-bottom:1.5pt solid #000;padding-bottom:2pt;font-family:Arial,sans-serif;color:#000;">'+raw+'</p>';
-      inSection=true;continue
-    }
-    // Name (first line, short, title case)
-    if(i===0&&raw.split(' ').length<=4){
-      body+='<p style="margin:0 0 2pt 0;font-size:18pt;font-weight:700;text-align:center;font-family:Arial,sans-serif;color:#000;">'+raw+'</p>';continue
-    }
-    // Contact line (contains | or @ or phone)
-    if(raw.match(/@|[\d\-\(\)\+\.]{7,}/)){
-      body+='<p style="margin:0 0 8pt 0;font-size:9.5pt;text-align:center;color:#444;font-family:Arial,sans-serif;">'+raw+'</p>';continue
-    }
-    // Bullet points
-    if(raw.match(/^[•\-\*]/)||raw.match(/^\d+\./)){
-      body+='<p style="margin:0 0 1pt 12pt;font-size:10pt;line-height:1.35;font-family:Arial,sans-serif;color:#000;">'+raw+'</p>';continue
-    }
-    // Everything else - body text
-    body+='<p style="margin:0 0 2pt 0;font-size:10pt;line-height:1.35;font-family:Arial,sans-serif;color:#000;">'+raw+'</p>'
+  if(!_resumeData){var el=document.getElementById('fixedResumeOutput');if(!el||el.querySelector('.empty-state')){showToast('Fix your resume first.','error');return}}
+  if(!_resumeData)return;
+  var d=_resumeData;
+  function e(t){return (t||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+
+  var body='';
+
+  // NAME
+  body+='<p style="margin:0 0 3pt 0;font-size:16pt;font-weight:700;text-align:center;font-family:Arial,sans-serif;color:#000;letter-spacing:1pt;">'+e(d.name).toUpperCase()+'</p>';
+
+  // CONTACT
+  if(d.contact.length>0)
+    body+='<p style="margin:0 0 10pt 0;font-size:9pt;text-align:center;color:#444;font-family:Arial,sans-serif;">'+e(d.contact.join('  |  '))+'</p>';
+
+  // SUMMARY
+  if(d.summary){
+    body+='<p style="margin:12pt 0 3pt 0;font-size:10pt;font-weight:700;text-transform:uppercase;letter-spacing:0.8pt;border-bottom:1pt solid #000;padding-bottom:2pt;font-family:Arial,sans-serif;color:#000;">PROFESSIONAL SUMMARY</p>';
+    body+='<p style="margin:2pt 0 0 0;font-size:10pt;line-height:1.35;font-family:Arial,sans-serif;color:#000;">'+e(d.summary)+'</p>'
   }
-  var h='<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="UTF-8"><title>Fixed Resume</title></head><body style="font-family:Arial,sans-serif;font-size:10.5pt;color:#000;margin:30pt 50pt;">'+body+'</body></html>';
-  var b=new Blob([h],{type:'application/msword'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='fixed-resume.doc';a.click();URL.revokeObjectURL(a.href)
+
+  // SKILLS
+  if(d.skills.length>0){
+    body+='<p style="margin:12pt 0 3pt 0;font-size:10pt;font-weight:700;text-transform:uppercase;letter-spacing:0.8pt;border-bottom:1pt solid #000;padding-bottom:2pt;font-family:Arial,sans-serif;color:#000;">SKILLS</p>';
+    var skillHtml='';
+    for(var i=0;i<d.skills.length;i++){if(i>0)skillHtml+='  •  ';skillHtml+=e(d.skills[i])}
+    body+='<p style="margin:2pt 0 0 0;font-size:10pt;line-height:1.5;font-family:Arial,sans-serif;color:#000;">'+skillHtml+'</p>'
+  }
+
+  // EXPERIENCE
+  if(d.experience.length>0){
+    body+='<p style="margin:12pt 0 3pt 0;font-size:10pt;font-weight:700;text-transform:uppercase;letter-spacing:0.8pt;border-bottom:1pt solid #000;padding-bottom:2pt;font-family:Arial,sans-serif;color:#000;">EXPERIENCE</p>';
+    for(var i=0;i<d.experience.length;i++){
+      var exp=d.experience[i];
+      body+='<p style="margin:4pt 0 1pt 0;font-size:10pt;font-weight:700;font-family:Arial,sans-serif;color:#000;">'+e(exp.role)+' &mdash; '+e(exp.org)+'</p>';
+      if(exp.date)body+='<p style="margin:0 0 1pt 0;font-size:9.5pt;font-style:italic;color:#555;font-family:Arial,sans-serif;">'+e(exp.date)+'</p>';
+      for(var j=0;j<exp.bullets.length;j++)
+        body+='<p style="margin:0 0 1pt 18pt;font-size:10pt;line-height:1.35;font-family:Arial,sans-serif;color:#000;text-indent:-9pt;">&bull;&nbsp;'+e(exp.bullets[j])+'</p>'
+    }
+  }
+
+  // EDUCATION
+  if(d.education.length>0){
+    body+='<p style="margin:12pt 0 3pt 0;font-size:10pt;font-weight:700;text-transform:uppercase;letter-spacing:0.8pt;border-bottom:1pt solid #000;padding-bottom:2pt;font-family:Arial,sans-serif;color:#000;">EDUCATION</p>';
+    for(var i=0;i<d.education.length;i++){
+      if(d.education[i].type==='degree')
+        body+='<p style="margin:2pt 0 0 0;font-size:10pt;font-weight:700;font-family:Arial,sans-serif;color:#000;">'+e(d.education[i].text)+'</p>';
+      else
+        body+='<p style="margin:0 0 0 0;font-size:10pt;color:#333;font-family:Arial,sans-serif;">'+e(d.education[i].text)+'</p>'
+    }
+  }
+
+  // ADDITIONAL
+  if(d.other.length>0&&(d.other.join(' ').match(/certif|project|award|honor|language|volunteer|publication/i))){
+    body+='<p style="margin:12pt 0 3pt 0;font-size:10pt;font-weight:700;text-transform:uppercase;letter-spacing:0.8pt;border-bottom:1pt solid #000;padding-bottom:2pt;font-family:Arial,sans-serif;color:#000;">ADDITIONAL</p>';
+    for(var i=0;i<Math.min(d.other.length,6);i++)
+      body+='<p style="margin:0 0 0 0;font-size:10pt;font-family:Arial,sans-serif;color:#000;">'+e(d.other[i])+'</p>'
+  }
+
+  var h='<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="UTF-8"><title>Resume - '+e(d.name)+'</title></head><body style="font-family:Arial,sans-serif;font-size:10pt;color:#000;margin:50pt 60pt;">'+body+'</body></html>';
+  var b=new Blob([h],{type:'application/msword'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='resume-'+d.name.toLowerCase().replace(/\s+/g,'-')+'.doc';a.click();URL.revokeObjectURL(a.href)
 }
 function clearAll(){
   document.getElementById('resumeInput').value='';document.getElementById('jdInput').value='';
