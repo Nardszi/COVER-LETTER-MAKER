@@ -116,7 +116,14 @@ textarea.jd-input{min-height:180px}
 .footer span{color:var(--accent);font-weight:700;font-family:var(--font-display)}
 .footer .heart{color:var(--red);display:inline-block;animation:heartbeat 1.5s infinite}
 @keyframes heartbeat{0%,100%{transform:scale(1)}50%{transform:scale(1.15)}}
-.fixed-resume-output{background:#fff;color:#222;font-family:Garamond,Georgia,'Times New Roman',serif;font-size:10.5pt;line-height:1.4;padding:36px 32px;border-radius:var(--radius-sm);min-height:500px;overflow-y:auto;max-height:700px}
+.fixed-resume-output{background:#fff;color:#222;font-family:Garamond,Georgia,'Times New Roman',serif;font-size:10.5pt;line-height:1.4;padding:36px 32px;border-radius:var(--radius-sm);min-height:500px;overflow-y:auto;max-height:700px;transition:all .3s}
+.fixed-resume-output.resume-tpl-minimal{font-family:'Courier New',monospace;background:#fafafa;border-left:3px solid #333;padding-left:28px}
+.fixed-resume-output.resume-tpl-minimal .resume-section-title{font-family:'Courier New',monospace;border-bottom:1px solid #999;letter-spacing:0;font-size:10pt}
+.fixed-resume-output.resume-tpl-minimal .resume-name{font-family:'Courier New',monospace;letter-spacing:2px;font-weight:700}
+.fixed-resume-output.resume-tpl-modern{font-family:'Inter',Helvetica,Arial,sans-serif;background:linear-gradient(135deg,#fafbff,#fff);border:1px solid #e0e7ff}
+.fixed-resume-output.resume-tpl-modern .resume-section-title{font-family:'Inter',sans-serif;color:#4f46e5;border-bottom-color:#c7d2fe}
+.fixed-resume-output.resume-tpl-modern .resume-name{font-family:'Inter',sans-serif;color:#1e1b4b;font-weight:800}
+.fixed-resume-output.resume-tpl-modern .resume-skill-matched{background:#e0e7ff;color:#4f46e5}
 .fixed-resume-output .resume-name{font-size:22pt;font-weight:400;text-align:center;margin-bottom:2px;color:#000;letter-spacing:1px}
 .fixed-resume-output .resume-contact{text-align:center;font-size:9.5pt;color:#444;margin-bottom:14px;letter-spacing:0.3px}
 .fixed-resume-output .resume-section-title{font-family:Calibri,Arial,sans-serif;font-size:10.5pt;font-weight:700;letter-spacing:1px;border-bottom:1.5px solid #000;padding-bottom:2px;margin-top:14px;margin-bottom:5px;color:#000}
@@ -1517,6 +1524,16 @@ function pushUndo(){if(_resumeData){_undoStack.push(JSON.stringify(_resumeData))
 function undoResume(){if(_undoStack.length===0)return;_redoStack.push(JSON.stringify(_resumeData));var prev=JSON.parse(_undoStack.pop());_resumeData=prev;renderResumePreview();updateUndoRedoBtns();showToast('Undone.','success')}
 function redoResume(){if(_redoStack.length===0)return;_undoStack.push(JSON.stringify(_resumeData));var next=JSON.parse(_redoStack.pop());_resumeData=next;renderResumePreview();updateUndoRedoBtns();showToast('Redone.','success')}
 function updateUndoRedoBtns(){document.getElementById('undoBtn').disabled=_undoStack.length===0;document.getElementById('redoBtn').disabled=_redoStack.length===0}
+
+// ─── TEMPLATE SWITCH ──────────────────────────────────────
+function changeTemplate(){
+  if(!_resumeData)return;
+  pushUndo();
+  var tpl=document.getElementById('templateSelect').value;
+  var el=document.getElementById('fixedResumeOutput');
+  el.className='fixed-resume-output resume-tpl-'+tpl;
+  renderResumePreview();
+}
 
 // ─── RENDER PREVIEW HELPER ────────────────────────────────
 function renderResumePreview(){
