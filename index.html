@@ -1501,7 +1501,10 @@ function clearAll(){
   hideUploadStatus();
   _uploadedResume='';document.getElementById('jdInputRF').value='';
   hideUploadStatusRF();
-  var fr=document.getElementById('fixedResumeOutput');if(fr)fr.innerHTML='<div class="empty-state" style="padding:60px 20px;"><div class="icon">📄</div><p>Upload your resume and paste a job description, then click <strong>Fix My Resume</strong>.</p></div>';
+  _resumeData=null;_undoStack=[];_redoStack=[];
+  document.getElementById('previewToolbar').style.display='none';
+  document.getElementById('atsScore').style.display='none';
+  var fr=document.getElementById('fixedResumeOutput');if(fr){fr.innerHTML='<div class="empty-state" style="padding:60px 20px;"><div class="icon">📄</div><p>Upload your resume and paste a job description, then click <strong>Fix My Resume</strong>.</p></div>';fr.className='fixed-resume-output'}
   showToast('Cleared all fields.','success')
 }
 function showToast(m,t){
